@@ -3,6 +3,11 @@
 ## [Unreleased]
 
 ### Added
+- Configured Matt Pocock's engineering skills for this repo (`/setup-matt-pocock-skills`)
+  - `docs/agents/issue-tracker.md` — GitHub Issues via the `gh` CLI
+  - `docs/agents/triage-labels.md` — default five-role label vocabulary
+  - `docs/agents/domain.md` — single-context domain doc layout
+  - `## Agent skills` section added to `AGENTS.md`
 - Installed all 38 skills from `mattpocock/skills` via the `skills` CLI
   - Source copies live in `.agents/skills/` (shared by all agents)
   - `agent/skills/` and `.claude/skills/` provide tool-specific paths

@@ -38,3 +38,17 @@ npm run build
 
 - **Always commit to git** after every meaningful change (`git add -A && git commit -m "..."`)
 - **Always update CHANGELOG.md** before committing — add entry under `## [Unreleased]` with bullet points describing the change
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues, operated through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, used as-is. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout. See `docs/agents/domain.md`.
