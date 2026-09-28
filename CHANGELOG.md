@@ -3,6 +3,19 @@
 ## [Unreleased]
 
 ### Added
+- `CONTEXT.md` glossary fixing the app's language: **task**, **task list**, **open task**, **done task**, **view**
+
+### Changed
+- Settled design direction for the redesign (see below)
+
+### Design decisions
+- Improve the existing app rather than rebuild it
+- Single user, no accounts or logins
+- Deploy to Vercel, reachable from any device
+- Call the things on the list "tasks", not "todos"
+- Minimal visual design with both dark and light themes
+
+### Skills setup
 - Configured Matt Pocock's engineering skills for this repo (`/setup-matt-pocock-skills`)
   - `docs/agents/issue-tracker.md` — GitHub Issues via the `gh` CLI
   - `docs/agents/triage-labels.md` — default five-role label vocabulary
