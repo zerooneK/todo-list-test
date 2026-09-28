@@ -14,6 +14,9 @@
 - Deploy to Vercel, reachable from any device
 - Call the things on the list "tasks", not "todos"
 - Minimal visual design with both dark and light themes
+- Done tasks stay visible, struck through, until deleted or cleared
+- Keep the "clear done" button — deliberate sweep-up, no auto-expiry
+- A task holds only its words: no due date, priority, note, or grouping
 
 ### Skills setup
 - Configured Matt Pocock's engineering skills for this repo (`/setup-matt-pocock-skills`)

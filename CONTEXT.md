@@ -26,3 +26,8 @@ _Avoid_: Completed todo, archived item, checked item
 Which subset of the task list is currently shown — all tasks, only open
 tasks, or only done tasks.
 _Avoid_: Filter, tab, mode
+
+**Clear done**:
+Sweep away every done task at once. Offered as a single deliberate action,
+not an automatic cleanup.
+_Avoid_: Clear completed, purge, bulk delete
