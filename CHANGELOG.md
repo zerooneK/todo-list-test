@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Installed all 38 skills from `mattpocock/skills` via the `skills` CLI
+  - Source copies live in `.agents/skills/` (shared by all agents)
+  - `agent/skills/` and `.claude/skills/` provide tool-specific paths
+  - `skills-lock.json` records source paths and hashes for each skill
+- Included `setup-matt-pocock-skills` for first-time skill setup and issue-tracker config
+
 ## [1.0.0] - 2026-07-31
 
 ### Added
