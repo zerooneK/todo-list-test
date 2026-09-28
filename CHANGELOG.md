@@ -17,6 +17,11 @@
 - Done tasks stay visible, struck through, until deleted or cleared
 - Keep the "clear done" button — deliberate sweep-up, no auto-expiry
 - A task holds only its words: no due date, priority, note, or grouping
+- Use the app through its Vercel web address from one main browser — no
+  third-party storage service, no login
+- Daily automatic backup file on this computer, plus a "download my tasks" button
+- Small dark/light toggle that remembers the choice
+- Empty list shows one short, calm line
 
 ### Skills setup
 - Configured Matt Pocock's engineering skills for this repo (`/setup-matt-pocock-skills`)

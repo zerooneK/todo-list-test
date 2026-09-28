@@ -31,3 +31,17 @@ _Avoid_: Filter, tab, mode
 Sweep away every done task at once. Offered as a single deliberate action,
 not an automatic cleanup.
 _Avoid_: Clear completed, purge, bulk delete
+
+**Backup**:
+A dated copy of the whole task list, written to this computer once a day and
+also on demand. The safety net for browser-held tasks.
+_Avoid_: Save, export, sync, archive
+
+**Restore**:
+Put the task list back from a backup, replacing whatever is there now.
+_Avoid_: Undo, import, recover
+
+**Theme**:
+The calm visual style the person is looking at — light or dark. The person
+picks it with a small toggle and the app remembers that choice.
+_Avoid_: Colour scheme, skin, mode, appearance
