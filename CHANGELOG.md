@@ -3,6 +3,10 @@
 ## [Unreleased]
 
 ### Added
+- Implementation tickets for the redesign published to GitHub as issues #2-#12
+  (spec in #1), each tagged `ready-for-agent` and listing its own blockers
+- Triage labels created on the tracker: `needs-triage`, `needs-info`,
+  `ready-for-agent`, `ready-for-human`
 - `CONTEXT.md` glossary fixing the app's language: **task**, **task list**, **open task**, **done task**, **view**
 
 ### Changed
