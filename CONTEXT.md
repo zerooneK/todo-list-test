@@ -45,3 +45,13 @@ _Avoid_: Undo, import, recover
 The calm visual style the person is looking at — light or dark. The person
 picks it with a small toggle and the app remembers that choice.
 _Avoid_: Colour scheme, skin, mode, appearance
+
+**Removal**:
+Deleting a task, whether one at a time or every done task at once. Always
+recoverable for a short while afterwards by **Undo**.
+_Avoid_: Delete, clear, purge
+
+**Undo**:
+A brief, self-disappearing offer to reverse a **Removal**. Shown only right
+after a removal, never as a permanent control.
+_Avoid_: Revert, restore point, history

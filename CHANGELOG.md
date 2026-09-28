@@ -22,6 +22,10 @@
 - Daily automatic backup file on this computer, plus a "download my tasks" button
 - Small dark/light toggle that remembers the choice
 - Empty list shows one short, calm line
+- Weekly quiet hint to download a backup when it has been 7+ days
+- After any deletion, a brief self-disappearing Undo offer
+- Input box stays focused so tasks can be typed back-to-back with Enter
+- No large heading; a small quiet "tasks" label at the top
 
 ### Skills setup
 - Configured Matt Pocock's engineering skills for this repo (`/setup-matt-pocock-skills`)
