@@ -176,6 +176,14 @@ task, done task, view, clear done. The old "todo" wording is retired.
   can be reminded again in a later week
 - Downloading a backup clears the hint by resetting `lastBackup`
 - Wording stays quiet and factual; no urgency, no shouting
+- `BackupHint` is a `role="status"` region, like `PrivateWindowWarning` and
+  `UndoOffer`. All three are polite live regions; spell them the same way or
+  they drift apart
+- A live region that is only rendered when it has something to say is
+  commonly missed, because a region inserted together with its first words
+  arrives already full. Render it always, and collapse it out of sight while
+  empty — but never with `display: none`, which takes it out of the
+  accessibility tree, leaving nothing to observe when the words arrive
 
 ## The private window warning
 

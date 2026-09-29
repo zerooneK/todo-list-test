@@ -273,10 +273,30 @@ h1 {
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-tight) var(--space);
-  margin-top: var(--space-wide);
   padding: var(--space) var(--space);
   border: 1px solid var(--color-line);
   border-radius: var(--radius);
+}
+
+/* The region is always in the page, so a screen reader is already watching it
+   when the words arrive. Empty, it must draw nothing and take up no room —
+   but it must stay in the accessibility tree, so it is collapsed rather than
+   removed with `display: none`, which would take it out of that tree and leave
+   nothing to announce. */
+.backup-hint:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.backup-hint:not(:empty) {
+  margin-top: var(--space-wide);
 }
 
 .backup-hint-text {
@@ -386,10 +406,19 @@ h1 {
   color: var(--color-text-faint);
 }
 
-/* The region is always in the page, so that a screen reader announces it when
-   it fills. Empty, it must take up no space at all. */
+/* Collapsed rather than `display: none`, for the reason given at
+   `.backup-hint:empty`: a removed node is not observed, so nothing would be
+   announced when the words arrive. */
 .undo-offer:empty {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .undo-offer:not(:empty) {

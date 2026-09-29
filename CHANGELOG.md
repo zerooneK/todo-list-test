@@ -3,6 +3,22 @@
 ## [Unreleased]
 
 ### Fixed
+- The overdue-backup reminder appeared on the page and nothing else
+  (GitHub issue #16). It had no live region, so it only reached whoever
+  happened to be looking at that part of the screen at that moment. That
+  defeated its purpose: it is the warning that the only copy of the task list
+  is getting old
+  - It is now a `role="status"` region, the same as the private-window notice
+    and the undo offer. The wording, the seven-day interval, and the way a
+    dismissal is remembered are all unchanged
+  - The region stays in the page and fills rather than being inserted with its
+    first words, which is the form screen readers commonly miss
+  - An empty live region is collapsed out of sight rather than removed with
+    `display: none`, because a removed node is not in the accessibility tree,
+    so there would be nothing listening when the words arrived. The same flaw
+    in the undo offer's region is fixed alongside it
+
+### Fixed
 - The undo offer said only "Removed", which described none of the cases it
   actually covered (GitHub issue #15). A sweep of fourteen read exactly like a
   removal of one, and removing a second task silently ended the first one's undo

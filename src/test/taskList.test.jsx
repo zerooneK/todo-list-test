@@ -1768,13 +1768,14 @@ describe('what the undo offer says', () => {
     await addTask(user, 'Second')
 
     await user.click(screen.getByRole('button', { name: 'Remove First' }))
-    const offer = screen.getByRole('status')
-    expect(offer).toBeInTheDocument()
-    expect(offer).toHaveTextContent('1 task removed')
+    const words = screen.getByText(/1 task removed/)
+    const region = words.closest('[role="status"]')
+    expect(region).not.toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Remove Second' }))
     // The same live region now reports the loss, so it is announced again.
-    expect(screen.getByRole('status')).toHaveTextContent(/no longer be undone/)
+    expect(screen.getByText(/no longer be undone/).closest('[role="status"]'))
+      .toBe(region)
   })
 
   it('still clears itself, and the timer is unchanged', async () => {
@@ -1818,5 +1819,80 @@ describe('what the undo offer says', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('the backup reminder being noticed', () => {
+  // The reminder used to appear on the page and nothing else, so it only
+  // reached whoever happened to be looking at that part of the screen. It is
+  // the one moment where being noticed matters most: it is the warning that
+  // the only copy of the task list is getting old.
+  //
+  // What a screen reader announces is not something a test can observe, so
+  // these check the two things that make it announceable: the words are in a
+  // live region, and the region is already in the page before the words
+  // arrive, so nothing is being inserted together with its first text.
+
+  function backupRegion() {
+    return document.querySelector('.backup-hint')
+  }
+
+  it('puts the reminder in a live region, like the other notices', () => {
+    render(<App />)
+    expect(backupRegion()).toHaveAttribute('role', 'status')
+  })
+
+  it('uses the same live region the undo offer uses', async () => {
+    // Both are role="status", which is a polite region that announces without
+    // interrupting. Spelling the announcements out differently per notice is
+    // how they drift apart.
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Buy milk{Enter}')
+    await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
+
+    expect(backupRegion()).toHaveAttribute('role', 'status')
+    expect(document.querySelector('.undo-offer')).toHaveAttribute('role', 'status')
+  })
+
+  it('is already in the page before the words arrive', async () => {
+    // With a backup just taken, there is nothing to say — but the region is
+    // still there, which is what lets it announce when there is.
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Download my tasks' }))
+
+    expect(screen.queryByText(/It has been a while/)).not.toBeInTheDocument()
+    expect(backupRegion()).not.toBeNull()
+    // Still in the accessibility tree, only collapsed out of sight.
+    expect(backupRegion()).not.toHaveStyle({ display: 'none' })
+  })
+
+  it('is not taken out of the page while it has nothing to say', async () => {
+    // A region hidden with `display: none` is not in the accessibility tree,
+    // so nothing would be listening when the words arrived.
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Download my tasks' }))
+
+    expect(backupRegion()).not.toHaveStyle({ display: 'none' })
+  })
+
+  it('is still shown on the page, not only announced', () => {
+    render(<App />)
+    expect(screen.getByText(/It has been a while since you downloaded a backup/))
+      .toBeInTheDocument()
+  })
+
+  it('goes quiet once a backup is taken', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    expect(screen.getByText(/It has been a while since you downloaded a backup/))
+      .toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Download my tasks' }))
+
+    expect(screen.queryByText(/It has been a while since you downloaded a backup/))
+      .not.toBeInTheDocument()
   })
 })
