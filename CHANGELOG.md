@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- The app is published at **https://todo-app-react-zeta-nine.vercel.app**
+  (GitHub issue #12). Deployed from `main` to Vercel, with the repository kept
+  as the single source of the code
+- Checks for the built app (`npm run verify:dist`), because the production
+  bundle is what people actually run and `npm test` only covers development:
+  - `verify-dist.mjs` drives the real production bundle as a person would, and
+    confirms the calm style survives the build: no motion, no gradients, no
+    console errors
+  - `verify-reload.mjs` opens the built app twice against the same storage to
+    prove tasks survive closing and reopening the page, and that a backup taken
+    in the built app can be restored
 - A warning in a private or incognito window (GitHub issue #11) — the app's
   worst failure mode is silent loss of real tasks, so it is surfaced instead of
   being left for the person to discover

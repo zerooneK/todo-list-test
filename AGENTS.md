@@ -14,6 +14,43 @@ npm run dev
 npm run build
 ```
 
+## Published address
+
+- **https://todo-app-react-zeta-nine.vercel.app**
+- Deployed from `main` on Vercel; the repository stays the single source of
+  the code
+- No analytics, tracking or third-party scripts are in the app or added by
+  Vercel. Only the app's own assets are served
+- **Use an ordinary window, never a private one.** A private window throws its
+  data away on close, so tasks added there are lost. The app warns when the
+  browser refuses to save, but some browsers give no signal until the tab is
+  closed, so the warning is a safety net rather than a guarantee
+- Redeploy with `vercel deploy --prod`. Git auto-deploy on push is *not* wired
+  up: `vercel git connect` needs the GitHub App installed on the repository, so
+  it has to be done by hand in the Vercel and GitHub settings
+- Tasks live in one browser on one device. Clearing that browser's data
+  destroys them, which is what the download button exists to protect against
+
+## Checking the published build
+
+`npm test` covers behaviour in development. The built bundle is verified
+separately, because that is what people actually run:
+
+```bash
+npm run verify:dist
+```
+
+- `verify-dist.mjs` drives the real production bundle in jsdom as a person
+  would: add with Enter, tick, remove with Undo, switch theme, and confirms
+  the calm style holds (no motion, no gradients) with no console errors
+- `verify-reload.mjs` opens the built app twice against the same storage to
+  prove tasks survive a page reload, and that a backup taken in the built app
+  is restorable
+- The bundle served by Vercel was confirmed byte-identical (same sha256) to the
+  one these checks drive, so what is verified is what is published
+
+## Run dev server
+
 ## Structure
 
 - `src/App.jsx` — root component: owns `tasks` + `currentView` state, passes props down
