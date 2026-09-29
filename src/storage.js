@@ -35,16 +35,21 @@ export function readJson(key, fallback) {
   }
 }
 
+// Best-effort. A browser that refuses to store anything carries on without
+// remembering, which is what the private-window notice is for; there is
+// nothing to act on here, so nothing is returned.
 export function writeJson(key, value) {
   try {
     window.localStorage.setItem(key, JSON.stringify(value))
-    return true
   } catch {
-    return false
+    // Ignored on purpose.
   }
 }
 
-export function readNumber(key) {
+// A stored string, exactly as it was written. Both a plain string and a
+// timestamp arrive as strings here; deciding what a value means belongs to
+// whoever stored it, not to this module.
+export function readText(key) {
   try {
     return window.localStorage.getItem(key)
   } catch {
@@ -52,7 +57,7 @@ export function readNumber(key) {
   }
 }
 
-export function writeNumber(key, value) {
+export function writeText(key, value) {
   try {
     window.localStorage.setItem(key, String(value))
   } catch {

@@ -26,6 +26,17 @@
   - Matching the calm style: a quiet bordered line in shared colours, not a red
     alert, and nothing moves or animates
 
+### Changed
+- `storage.js` is tidied so its names say what they return. `readNumber` and
+  `writeNumber` are now `readText` and `writeText`, because a stored value
+  arrives as a string and deciding what it means is the caller's business
+  (`readStamp` remains the only place that treats a stored value as a number)
+- `writeJson` no longer returns a boolean that nothing read. A refused write is
+  not something the app reacts to, so there is nothing to branch on
+- No behaviour change: the same keys, the same values, the same never-throw
+  guarantee. The private-window checks break storage directly and were not
+  affected
+
 ### Added
 - A check for the look the page paints before the app runs, in
   `verify-theme.mjs`. The pre-paint script in `index.html` decides the theme

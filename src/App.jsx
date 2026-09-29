@@ -12,9 +12,9 @@ import { asTaskList, newTask } from './taskIdentity'
 import {
   detectStorage,
   readJson,
-  readNumber,
+  readText,
   writeJson,
-  writeNumber,
+  writeText,
 } from './storage'
 import './App.css'
 
@@ -35,7 +35,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 // Read a stored timestamp, or null when it is absent or unreadable.
 function readStamp(key) {
-  const value = Number(readNumber(key))
+  const value = Number(readText(key))
   return Number.isFinite(value) && value > 0 ? value : null
 }
 
@@ -52,7 +52,7 @@ function readTasks() {
 }
 
 function readTheme() {
-  const stored = readNumber(THEME_KEY)
+  const stored = readText(THEME_KEY)
   if (stored === 'light' || stored === 'dark') return stored
 
   // No choice yet, so follow the device.
@@ -108,7 +108,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    writeNumber(THEME_KEY, theme)
+    writeText(THEME_KEY, theme)
   }, [theme])
 
   function toggleTheme() {
@@ -177,14 +177,14 @@ export default function App() {
   function recordBackup() {
     const now = Date.now()
     setLastBackup(now)
-    writeNumber(LAST_BACKUP_KEY, now)
+    writeText(LAST_BACKUP_KEY, now)
   }
 
   // Dismissed is remembered, so returning to the app stays calm.
   function dismissHint() {
     const now = Date.now()
     setHintDismissed(now)
-    writeNumber(HINT_DISMISSED_KEY, now)
+    writeText(HINT_DISMISSED_KEY, now)
   }
 
   function restoreTasks(restored) {

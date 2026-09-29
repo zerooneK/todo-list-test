@@ -148,6 +148,12 @@ task, done task, view, clear done. The old "todo" wording is retired.
 - `src/storage.js` is the only place that touches `localStorage`. Every read
   and write there is wrapped and returns a fallback instead of throwing, so a
   browser that refuses storage can never take the app down
+- Its interface is `readText`, `writeText`, `readJson`, `writeJson`, plus
+  `detectStorage` and `STORAGE`. The names say what comes back: a stored string
+  is read as a string, and deciding what a string *means* belongs to the caller
+  (`readStamp` in App.jsx is the only place that knows a timestamp is a number)
+- The writers return nothing on purpose. A refused write is not something the app
+  acts on, so there is nothing for a caller to branch on
 - It reports one of three states: `available` (tasks will survive), `private`
   (writing is refused, which is what a private window usually does), and
   `unknown` (no way to tell, so the app carries on quietly)
