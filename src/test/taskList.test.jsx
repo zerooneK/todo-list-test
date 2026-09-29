@@ -557,6 +557,156 @@ describe('backing up and restoring', () => {
   })
 })
 
+describe('the private window warning', () => {
+  const warning = () => screen.queryByText(/This is a private window/)
+
+  // Some private windows refuse every write. Make the real thing behave that
+  // way rather than asserting on internals.
+  function breakStorageWrites() {
+    const realSet = Storage.prototype.setItem
+    Storage.prototype.setItem = () => {
+      throw new DOMException('QuotaExceededError')
+    }
+    return () => { Storage.prototype.setItem = realSet }
+  }
+
+  let restoreWrites = () => {}
+
+  afterEach(() => {
+    restoreWrites()
+    restoreWrites = () => {}
+  })
+
+  it('warns me when the window will not save tasks', () => {
+    restoreWrites = breakStorageWrites()
+
+    render(<App />)
+
+    expect(warning()).toBeInTheDocument()
+  })
+
+  it('says plainly that tasks will not be saved here', () => {
+    restoreWrites = breakStorageWrites()
+
+    render(<App />)
+
+    expect(warning()).toHaveTextContent('will not be saved')
+    expect(warning()).toHaveTextContent('lost when this window is closed')
+  })
+
+  it('points me at what to do instead', () => {
+    restoreWrites = breakStorageWrites()
+
+    render(<App />)
+
+    expect(warning()).toHaveTextContent('ordinary window')
+    expect(warning()).toHaveTextContent('download a backup')
+  })
+
+  it('still works in a private window, rather than failing', async () => {
+    restoreWrites = breakStorageWrites()
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Written in private{Enter}')
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Written in private as done' }))
+    await user.click(screen.getByRole('button', { name: 'All' }))
+
+    expect(screen.getByText('Written in private')).toBeInTheDocument()
+  })
+
+  it('does not get in the way of the rest of the app', async () => {
+    restoreWrites = breakStorageWrites()
+    const user = userEvent.setup()
+
+    render(<App />)
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Still usable{Enter}')
+
+    expect(screen.getByText('Still usable')).toBeInTheDocument()
+    expect(warning()).toBeInTheDocument()
+  })
+
+  it('still lets me take a backup from a private window', async () => {
+    restoreWrites = breakStorageWrites()
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Worth keeping{Enter}')
+
+    URL.createObjectURL = vi.fn(() => 'blob:mock')
+    URL.revokeObjectURL = vi.fn()
+    const blobs = []
+    const realCreate = URL.createObjectURL
+    URL.createObjectURL = vi.fn(blob => { blobs.push(blob); return realCreate(blob) })
+
+    await user.click(screen.getByRole('button', { name: 'Download my tasks' }))
+
+    expect(await blobs[0].text()).toContain('Worth keeping')
+  })
+
+  it('stays quiet in an ordinary window', () => {
+    render(<App />)
+
+    expect(warning()).not.toBeInTheDocument()
+  })
+
+  it('stays quiet even with tasks saved, in an ordinary window', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'An ordinary task{Enter}')
+
+    expect(warning()).not.toBeInTheDocument()
+  })
+
+  it('does not fail when the browser has no storage at all', () => {
+    const real = window.localStorage
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() { throw new Error('storage disabled') },
+    })
+
+    try {
+      render(<App />)
+      expect(screen.getByPlaceholderText('What needs doing?')).toBeInTheDocument()
+      expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+    } finally {
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: real,
+      })
+    }
+  })
+
+  it('does not warn when detection is simply not possible', () => {
+    // No localStorage to inspect at all: carry on quietly rather than guess.
+    const real = window.localStorage
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() { return undefined },
+    })
+
+    try {
+      render(<App />)
+      expect(screen.getByPlaceholderText('What needs doing?')).toBeInTheDocument()
+      expect(warning()).not.toBeInTheDocument()
+    } finally {
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: real,
+      })
+    }
+  })
+
+  it('survives unreadable saved data', () => {
+    localStorage.setItem('tasks', 'not json at all {{{')
+
+    render(<App />)
+
+    expect(screen.getByPlaceholderText('What needs doing?')).toBeInTheDocument()
+    expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+  })
+})
+
 describe('fast task entry and safe editing', () => {
   const input = () => screen.getByPlaceholderText('What needs doing?')
 

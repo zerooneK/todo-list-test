@@ -3,6 +3,26 @@
 ## [Unreleased]
 
 ### Added
+- A warning in a private or incognito window (GitHub issue #11) — the app's
+  worst failure mode is silent loss of real tasks, so it is surfaced instead of
+  being left for the person to discover
+  - Where the browser refuses to store anything, a calm notice says plainly
+    that tasks will not be saved here and are lost when the window is closed,
+    and points at using an ordinary window or downloading a backup
+  - It never blocks the app; tasks can still be added, ticked and backed up
+  - No notice appears in an ordinary window, and no notice appears when
+    detection is simply not possible, so there are no false alarms
+  - Matching the calm style: a quiet bordered line in shared colours, not a red
+    alert, and nothing moves or animates
+
+### Fixed
+- The app could crash outright when the browser refused storage. A private
+  window that rejects writes threw `QuotaExceededError` through the render and
+  the app stopped working entirely, with an empty screen and no way to recover
+  what had been typed
+- All storage access now goes through `src/storage.js`, where every read and
+  write is wrapped and falls back rather than throwing. Corrupt saved data is
+  also survived instead of breaking the first render
 - Fast task entry and safe editing, now covered by checks (GitHub issue #10).
   The behaviour itself was already correct, so this is a testing and
   accessibility ticket rather than a redesign:

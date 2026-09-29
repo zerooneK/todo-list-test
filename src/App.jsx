@@ -7,6 +7,14 @@ import ThemeToggle from './components/ThemeToggle'
 import UndoOffer from './components/UndoOffer'
 import BackupControls from './components/BackupControls'
 import BackupHint from './components/BackupHint'
+import PrivateWindowWarning from './components/PrivateWindowWarning'
+import {
+  detectStorage,
+  readJson,
+  readNumber,
+  writeJson,
+  writeNumber,
+} from './storage'
 import './App.css'
 
 // The task list is saved under the newer name. The older name is still read
@@ -26,22 +34,24 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 // Read a stored timestamp, or null when it is absent or unreadable.
 function readStamp(key) {
-  const value = Number(localStorage.getItem(key))
+  const value = Number(readNumber(key))
   return Number.isFinite(value) && value > 0 ? value : null
 }
 
 function readTasks() {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) return JSON.parse(stored)
+  const stored = readJson(STORAGE_KEY, null)
+  if (Array.isArray(stored)) return stored
 
-  const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
-  if (legacy) return JSON.parse(legacy)
+  // The older name is still read as a fallback, so a list saved before the
+  // rename survives.
+  const legacy = readJson(LEGACY_STORAGE_KEY, null)
+  if (Array.isArray(legacy)) return legacy
 
   return []
 }
 
 function readTheme() {
-  const stored = localStorage.getItem(THEME_KEY)
+  const stored = readNumber(THEME_KEY)
   if (stored === 'light' || stored === 'dark') return stored
 
   // No choice yet, so follow the device.
@@ -62,6 +72,12 @@ export default function App() {
   // left unused for a long time never piles up reminders.
   const [lastBackup, setLastBackup] = useState(() => readStamp(LAST_BACKUP_KEY))
   const [hintDismissed, setHintDismissed] = useState(() => readStamp(HINT_DISMISSED_KEY))
+  // A private window throws its data away when closed, so tasks added there
+  // are lost silently. Where that can be detected, say so rather than let it
+  // be discovered the hard way.
+  // Detected once on load. A private window is not something that changes
+  // while the app is open, so this never needs to be recalculated.
+  const [storageState] = useState(detectStorage)
 
   // Shown when it has been a week or more since the last download, unless the
   // person has dismissed it since then. Never downloaded at all counts as due:
@@ -76,8 +92,10 @@ export default function App() {
   const hintShouldShow = daysSinceBackup >= BACKUP_INTERVAL_DAYS
     && !dismissedSinceLastBackup
 
+  // Saving is best-effort: if the browser refuses to store anything, the app
+  // still works for this session rather than falling over.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+    writeJson(STORAGE_KEY, tasks)
   }, [tasks])
 
   // The offer clears itself; the person never has to dismiss it.
@@ -89,7 +107,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem(THEME_KEY, theme)
+    writeNumber(THEME_KEY, theme)
   }, [theme])
 
   function toggleTheme() {
@@ -161,14 +179,14 @@ export default function App() {
   function recordBackup() {
     const now = Date.now()
     setLastBackup(now)
-    localStorage.setItem(LAST_BACKUP_KEY, String(now))
+    writeNumber(LAST_BACKUP_KEY, now)
   }
 
   // Dismissed is remembered, so returning to the app stays calm.
   function dismissHint() {
     const now = Date.now()
     setHintDismissed(now)
-    localStorage.setItem(HINT_DISMISSED_KEY, String(now))
+    writeNumber(HINT_DISMISSED_KEY, now)
   }
 
   function restoreTasks(restored) {
@@ -194,6 +212,7 @@ export default function App() {
         onEdit={editTask}
       />
       <TaskFooter tasks={tasks} onClearDone={clearDone} />
+      <PrivateWindowWarning storageState={storageState} />
       <BackupHint show={hintShouldShow} onDismiss={dismissHint} />
       <BackupControls
         tasks={tasks}

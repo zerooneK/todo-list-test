@@ -30,6 +30,8 @@ npm run build
 - Saved under the key `tasks` in `localStorage`
 - The older key `todos` is still read as a fallback and is never deleted, so a
   task list saved before the rename survives
+- All storage access goes through `src/storage.js`, which never throws. A
+  browser that refuses to store anything cannot take the app down
 
 ## Language
 
@@ -91,6 +93,23 @@ task, done task, view, clear done. The old "todo" wording is retired.
   can be reminded again in a later week
 - Downloading a backup clears the hint by resetting `lastBackup`
 - Wording stays quiet and factual; no urgency, no shouting
+
+## The private window warning
+
+- `src/storage.js` is the only place that touches `localStorage`. Every read
+  and write there is wrapped and returns a fallback instead of throwing, so a
+  browser that refuses storage can never take the app down
+- It reports one of three states: `available` (tasks will survive), `private`
+  (writing is refused, which is what a private window usually does), and
+  `unknown` (no way to tell, so the app carries on quietly)
+- `PrivateWindowWarning` renders only for `private`. `unknown` is deliberately
+  silent: guessing would put a false alarm in front of ordinary users
+- The notice states what will happen *and* what to do instead, and never
+  blocks the app
+- Detection is a one-time probe on load, not a re-check on every change
+- Honest limitation: some browsers give no signal at all until the tab is
+  closed, so this warning cannot be relied on in every private window. It is a
+  safety net, not a guarantee
 
 ## Testing
 
