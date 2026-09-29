@@ -26,6 +26,17 @@
   - Matching the calm style: a quiet bordered line in shared colours, not a red
     alert, and nothing moves or animates
 
+### Added
+- `src/views.js`, which owns what a view is: its label, which tasks it shows,
+  and what it says when it shows nothing. Adding a view is now one edit in one
+  file rather than three edits across two
+- Each view button now says whether it is the view showing, via `aria-pressed`.
+  Previously the only record of the selected view was a CSS class, which is
+  visible to nobody using a screen reader
+- The check that the current view survives a theme switch now asks what a person
+  can perceive — that the Done button reads as pressed — instead of reading a
+  stylesheet. This was the one place the checks reached past the seam
+
 ### Fixed
 - Two tasks could be added in the same millisecond and become one task. The
   task's id was `Date.now()`, and the app finds a task by comparing ids, so

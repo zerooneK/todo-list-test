@@ -1192,8 +1192,75 @@ describe('the theme', () => {
     await user.click(screen.getByRole('button', { name: /look$/ }))
 
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
-    // Still in the done view, and the task is untouched.
-    expect(screen.getByRole('button', { name: 'Done' }).className).toContain('active')
+    // Still in the done view, and the task is untouched. Asked the way a person
+    // can perceive it, not by reading a stylesheet.
+    expect(screen.getByRole('button', { name: 'Done' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('says which view is showing, so it is perceivable', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    // The all view is showing to begin with.
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Done' })).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+
+    expect(screen.getByRole('button', { name: 'Open' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('shows each view its own tasks and its own quiet line', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Still open{Enter}')
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Already finished{Enter}')
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Already finished as done' }))
+
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    expect(screen.getByText('Still open')).toBeInTheDocument()
+    expect(screen.getByText('Already finished')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+    expect(screen.getByText('Still open')).toBeInTheDocument()
+    expect(screen.queryByText('Already finished')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    expect(screen.getByText('Already finished')).toBeInTheDocument()
+    expect(screen.queryByText('Still open')).not.toBeInTheDocument()
+  })
+
+  it('says its own quiet line when a view has nothing to show', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    // No tasks at all: the all view's line.
+    expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Only an open one{Enter}')
+
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    expect(screen.getByText('Nothing done yet.')).toBeInTheDocument()
+
+    // Back to all tasks, tick the only one, so nothing is open any more.
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Only an open one as done' }))
+
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+    expect(screen.getByText('Nothing left to do.')).toBeInTheDocument()
+  })
+
+  it('counts only the open tasks, whichever view is showing', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'One{Enter}')
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Two{Enter}')
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Two as done' }))
+
     expect(screen.getByText('1 open task')).toBeInTheDocument()
   })
 })

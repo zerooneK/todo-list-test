@@ -1,22 +1,19 @@
 import TaskItem from './TaskItem'
+import { tasksIn, viewFor } from '../views'
 
 export default function TaskList({ tasks, currentView, onToggle, onDelete, onEdit }) {
-  const filtered = tasks.filter(t => {
-    if (currentView === 'open') return !t.completed
-    if (currentView === 'done') return t.completed
-    return true
-  })
+  // What this view shows, and what it says when it shows nothing, both come
+  // from the view itself. Neither is decided here.
+  const view = viewFor(currentView)
+  const shown = tasksIn(tasks, currentView)
 
-  if (filtered.length === 0) {
-    const msg = currentView === 'done'
-      ? 'Nothing done yet.'
-      : currentView === 'open' ? 'Nothing left to do.' : 'Nothing here yet.'
-    return <p className="empty-msg">{msg}</p>
+  if (shown.length === 0) {
+    return <p className="empty-msg">{view.whenEmpty}</p>
   }
 
   return (
     <ul id="task-list">
-      {filtered.map(task => (
+      {shown.map(task => (
         <TaskItem
           key={task.id}
           task={task}

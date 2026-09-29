@@ -191,7 +191,16 @@ task, done task, view, clear done. The old "todo" wording is retired.
   a finished edit
 - `TaskInput` is never remounted on add, so the input keeps keyboard focus and
   the next task can be typed with Enter alone
-- View values: `'all'`, `'open'`, `'done'`
+- `src/views.js` owns what a view is: its label, which tasks it shows, and what
+  it says when it shows nothing. Adding a view is one edit in that file, not
+  three
+- A view's selected state is `aria-pressed`, which is what a person perceives.
+  The `.active` class is derived from it and is only how that reaches the
+  stylesheet — it is never the source of truth, and nothing asserts on it
+- Known naming debt: the module is `Filters.jsx` and the class `.filters`, but
+  the glossary term is **view** (CONTEXT.md lists "filter" under _Avoid_). Left
+  alone to keep the change focused; worth a rename when something else in that
+  area is touched
 - CSS class `.hidden` toggles visibility; `.completed` toggles strikethrough
 
 ## Workflow
