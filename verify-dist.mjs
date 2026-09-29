@@ -3,7 +3,7 @@ import {
   button, click, createReporter, openApp, pause,
   pressEnter, readBuild, toggleCheckbox, typeInto,
 } from './verify-harness.mjs'
-import { checkDeviceFallback, checkThemePrePaint } from './verify-theme.mjs'
+import { checkDeviceFallback, checkFocusRing, checkThemePrePaint } from './verify-theme.mjs'
 
 const build = readBuild()
 const { check, report } = createReporter()
@@ -75,6 +75,7 @@ check('no gradient', !/gradient/.test(css))
 
 // The stylesheet's own device fallback, checked against the real built CSS.
 checkDeviceFallback(css, check)
+checkFocusRing(css, check)
 
 check('no console errors', errors.length === 0)
 if (errors.length) console.log('errors:', errors.slice(0, 3))

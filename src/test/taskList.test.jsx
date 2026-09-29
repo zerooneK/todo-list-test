@@ -1515,3 +1515,103 @@ describe('two tasks with the same words', () => {
     expect(rows[1]).toHaveTextContent('Call the clinic')
   })
 })
+
+describe('moving through the app by keyboard', () => {
+  // A person tabbing through must reach every control and be able to work it.
+  // What a control looks like while focused is a stylesheet fact, checked
+  // against the built CSS in verify-dist.mjs; jsdom cannot see :focus-visible.
+  const FOCUSABLE = [
+    ['the add-task input', () => input()],
+    ['the Add button', () => screen.getByRole('button', { name: 'Add' })],
+    ['the All view', () => screen.getByRole('button', { name: 'All' })],
+    ['the Open view', () => screen.getByRole('button', { name: 'Open' })],
+    ['the Done view', () => screen.getByRole('button', { name: 'Done' })],
+    ['a task checkbox', () => screen.getByRole('checkbox')],
+    ['the rename control', () => screen.getByRole('button', { name: /^Rename / })],
+    ['the remove control', () => screen.getByRole('button', { name: /^Remove / })],
+    ['the clear-done button', () => screen.getByRole('button', { name: 'Clear done' })],
+    ['the theme toggle', () => screen.getByRole('button', { name: /look$/ })],
+    ['the download button', () => screen.getByRole('button', { name: 'Download my tasks' })],
+    ['the restore button', () => screen.getByRole('button', { name: 'Restore from a backup' })],
+  ]
+
+  it('reaches every control by tabbing from the top of the page', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+    // The clear-done offer only exists when there is something to sweep, so
+    // one task has to be done for every control in the app to be present.
+    await user.click(screen.getByRole('checkbox'))
+
+    for (const [name, find] of FOCUSABLE) {
+      const reached = await tabUntil(user, el => el === find())
+      expect(reached, `tabbing should reach ${name}`).toBe(true)
+    }
+  })
+
+  it('reaches the undo offer by keyboard after removing a task', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Call the dentist' }))
+    expect(await tabUntil(user, el => el === screen.getByRole('button', { name: 'Undo' }))).toBe(true)
+
+    await user.keyboard('{Enter}')
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+  })
+
+  it('can switch the look by keyboard', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(await tabUntil(user, el => el === screen.getByRole('button', { name: /look$/ }))).toBe(true)
+    await user.keyboard('{Enter}')
+    expect(document.documentElement).toHaveAttribute('data-theme')
+  })
+})
+
+describe('the tab order itself', () => {
+  // A control that is focused but shows no ring is a dead end. The file input
+  // behind the Restore button is 1px across, so it must not be a stop at all.
+  it('does not tab to the hidden file input', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    const seen = []
+    for (let i = 0; i < 12; i++) {
+      await user.tab()
+      seen.push(document.activeElement)
+    }
+    expect(seen).not.toContain(screen.getByLabelText('Choose a backup file'))
+  })
+
+  it('reaches the restore confirmation buttons when they appear', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const fileInput = screen.getByLabelText('Choose a backup file')
+
+    // Offer a backup file, so the confirmation is on the page to be reached.
+    // Chosen the way a person does it, through the file input itself.
+    await user.upload(fileInput, new File(
+      [JSON.stringify({ app: 'tasks', version: 1, tasks: [{ id: 1, text: 'From a backup', completed: false }] })],
+      'tasks-2026-01-01.json',
+      { type: 'application/json' }
+    ))
+
+    expect(screen.getByRole('button', { name: 'Replace my list' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Keep my current list' })).toBeInTheDocument()
+
+    // Both are ordinary buttons, so tabbing reaches them.
+    expect(await tabUntil(user, el => el === screen.getByRole('button', { name: 'Keep my current list' }))).toBe(true)
+  })
+
+  it('reaches the backup reminder when it is shown', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    // No backup has ever been taken, so the reminder is due on first open.
+    const dismiss = screen.getByRole('button', { name: 'Remind me later' })
+    expect(dismiss).toBeInTheDocument()
+    expect(await tabUntil(user, el => el === dismiss)).toBe(true)
+  })
+})

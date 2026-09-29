@@ -43,10 +43,12 @@ npm run verify:dist
 - `verify-dist.mjs` drives the real production bundle in jsdom as a person
   would: add with Enter, tick, remove with Undo, switch theme, and confirms
   the calm style holds (no motion, no gradients) with no console errors
-- `verify-theme.mjs` covers the look before the first paint, which nothing else
-  reaches. It runs the pre-paint script alone, then the real app, and requires
-  them to agree for every combination of stored choice and device, so a future
-  edit to either side fails instead of silently reintroducing the flash
+- `verify-theme.mjs` covers what jsdom cannot reach. It runs the pre-paint
+  script alone, then the real app, and requires them to agree for every
+  combination of stored choice and device, so a future edit to either side
+  fails instead of silently reintroducing the flash. It also reads the real
+  built CSS for the stylesheet facts a browser would apply and jsdom would not
+  resolve: the device fallback, and the keyboard focus ring
 - `verify-reload.mjs` opens the built app twice against the same storage to
   prove tasks survive a page reload, and that a backup taken in the built app
   is restorable
@@ -107,8 +109,27 @@ task, done task, view, clear done. The old "todo" wording is retired.
 - The `@media (prefers-color-scheme: dark)` rule in `index.css` is not a third
   copy. It is the only thing that applies the dark look if the pre-paint script
   is blocked or throws, so it is checked against the built CSS rather than
-  assumed
+  assumed. Neither is the focus ring, which is the one style in the app that is
+  about the keyboard rather than the mouse: it is drawn for keyboard focus only,
+  in a colour both looks already define, and is checked against the built CSS
+  because jsdom ignores `:focus-visible` in computed styles
 - `ThemeToggle` receives the current theme and an `onToggleTheme` callback
+- Every control signals that it is pressable by colour on hover, and nothing
+  else moves or outlines. That is a consequence of the calm look, so the one
+  signal that is not about the mouse is a shared focus ring:
+  `:where(button, input, [tabindex]):focus-visible` gets a 2px `--color-accent`
+  outline at 2px offset. Keyboard-only, so a mouse user never sees it
+- The ring lives in one place and is never re-declared per control. `:where`
+  keeps its specificity at zero so it cannot outrank a control's own styling
+- No rule anywhere may set an outline to `none` or `0` on a control: it would
+  erase the ring. Checked against the built CSS
+- The visually hidden file input is `tabIndex={-1}`, so it is not a tab stop. It
+  is 1px across, so a ring drawn round it would be invisible, and landing
+  somewhere that shows nothing is worse than not landing there. The visible
+  Restore button proxies it and carries the focus
+- jsdom ignores `:focus-visible` in computed styles, so the ring's appearance
+  is checked in `verify-theme.mjs` against the real built CSS, and what a
+  keyboard user can actually reach is checked in the app checks
 
 ## Undo
 

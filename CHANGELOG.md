@@ -3,6 +3,33 @@
 ## [Unreleased]
 
 ### Added
+- A shared focus ring, so the app can be used without a mouse (GitHub issue
+  #14). Every control signalled that it was pressable the same way — its colour
+  changed on hover — which left anyone using the keyboard with no way to tell
+  which control they were on. The one focus style in the whole stylesheet
+  belonged to the add-task input
+  - The ring is drawn for keyboard focus only, so a person using a mouse never
+    sees it and the resting page is unchanged
+  - It uses `--color-accent`, a colour both looks already define, so it needs no
+    colour of its own and follows the light and dark look on its own. Measured
+    against both backgrounds it clears 3:1 in both looks; that is prose, not a
+    check, because nothing in the app checks can see colour
+  - It lives in one place, and `:where` keeps its specificity at zero so it
+    cannot outrank a control's own styling and no per-control rule was touched
+  - The add-task input's own focus treatment was replaced by the shared ring
+    rather than kept alongside it, and two `outline: none` rules that would
+    have erased it are gone
+  - The visually hidden file input behind the Restore button is now
+    `tabIndex={-1}`. It is 1px across, so a ring drawn round it would be
+    invisible, and tabbing to a control that shows nothing is worse than not
+    tabbing to it at all. The visible Restore button proxies it
+  - Checks now tab through the app and reach every control, including the undo
+    offer after a removal, the restore confirmation once a file is chosen, and
+    the backup reminder. jsdom ignores `:focus-visible` in computed styles, so
+    what the ring looks like is checked against the real built CSS — including
+    that it still covers buttons *and* inputs, which a loosened selector would
+    otherwise drop silently — and what a keyboard person can reach is checked by
+    driving the app
 - Renaming a task is now a visible pencil at the end of every row
   (GitHub issue #13). It was a double-click on the text, which nothing on
   screen advertised: no pointer, no hover, no label, and no keyboard route at

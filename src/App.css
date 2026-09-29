@@ -33,6 +33,28 @@ body {
   align-self: flex-start;
 }
 
+/*
+ * Where the keyboard is.
+ *
+ * Every control in the app signals that it is pressable the same way, by
+ * changing colour when the mouse hovers over it. That is a deliberate
+ * consequence of the calm look, and it leaves anyone using a keyboard with no
+ * idea which control they are on. This ring is the answer, and it is the one
+ * signal in the app that is not about the mouse: it appears for keyboard
+ * focus only, so a person using a mouse never sees it and the resting page is
+ * unchanged.
+ *
+ * It is drawn in --color-accent, which both looks already define, so it needs
+ * no colour of its own and follows the light and dark looks on its own. It
+ * does not move, fade, or change the size of anything, so the calm look costs
+ * nothing for it. `:where` keeps its specificity at zero, so it cannot outrank
+ * a control's own styling and no per-control rule has to be touched.
+ */
+:where(button, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* A small quiet label, not a decorative heading */
 h1 {
   text-align: left;
@@ -80,11 +102,6 @@ h1 {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius);
-  outline: none;
-}
-
-#task-input:focus {
-  border-color: var(--color-accent);
 }
 
 /* Plain and quiet: no gradient, no shadow, no lift on hover */
@@ -173,7 +190,6 @@ h1 {
   color: var(--color-text);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius);
-  outline: none;
 }
 
 /* Two controls sit at the end of every row, so their weight has to say which
@@ -318,6 +334,10 @@ h1 {
   color: var(--color-danger);
 }
 
+/* Hidden, because the Restore button is what a person presses. It stays out of
+   the tab order too: it is 1px across, so a focus ring drawn round it would be
+   invisible, and tabbing to a control that shows nothing is worse than not
+   tabbing to it at all. The button proxies it and carries the focus instead. */
 #restore-input {
   position: absolute;
   width: 1px;

@@ -101,6 +101,10 @@ export default function BackupControls({ tasks, onRestore, onDownloaded }) {
         accept="application/json,.json"
         onChange={chooseFile}
         aria-label="Choose a backup file"
+        // The visible Restore button opens the picker, so the hidden input is
+        // not a stop in the tab order: a 1px control that takes focus and
+        // shows no ring is a dead end for a keyboard user.
+        tabIndex={-1}
       />
 
       {problem && <p className="backup-problem" role="alert">{problem}</p>}
