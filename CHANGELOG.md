@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- Fast task entry and safe editing, now covered by checks (GitHub issue #10).
+  The behaviour itself was already correct, so this is a testing and
+  accessibility ticket rather than a redesign:
+  - Pressing Enter adds the task and leaves the input focused and empty, so a
+    run of tasks can be typed with Enter alone; the Add button still works
+  - Empty and whitespace-only input create no task, and words are trimmed
+  - An edit stays transient: reloading mid-edit leaves the saved words
+    untouched rather than keeping a half-typed value
+  - The edit input gained an accessible name (`Edit <task>`), which also makes
+    it addressable by tests; previously it was indistinguishable from the
+    add-task box once emptied
 - The gentle weekly backup hint (GitHub issue #9) — so the backup habit survives
   without nagging
   - One quiet line appears once it has been seven days or more since the last

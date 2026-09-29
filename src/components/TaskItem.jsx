@@ -33,6 +33,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
         <input
           ref={inputRef}
           className="edit-input"
+          aria-label={`Edit ${task.text}`}
           value={editText}
           onChange={e => setEditText(e.target.value)}
           onBlur={saveEdit}

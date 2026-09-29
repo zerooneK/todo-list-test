@@ -113,6 +113,15 @@ task, done task, view, clear done. The old "todo" wording is retired.
 
 - Each task: `{ id: number, text: string, completed: boolean }`
 - Editing uses local `useState` in TaskItem — blur/Enter commits, Escape cancels
+- An edit is deliberately transient: the in-progress text lives only in
+  `TaskItem`'s local state and is never written to storage as it is typed, so
+  reloading mid-edit leaves the saved words untouched
+- The edit input carries `aria-label={`Edit ${task.text}`}` so it is
+  addressable by name; without it the empty add-task input is indistinguishable
+- Adding trims and discards whitespace-only input, both for `TaskInput` and for
+  a finished edit
+- `TaskInput` is never remounted on add, so the input keeps keyboard focus and
+  the next task can be typed with Enter alone
 - View values: `'all'`, `'open'`, `'done'`
 - CSS class `.hidden` toggles visibility; `.completed` toggles strikethrough
 

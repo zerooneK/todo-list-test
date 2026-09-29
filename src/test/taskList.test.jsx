@@ -557,6 +557,153 @@ describe('backing up and restoring', () => {
   })
 })
 
+describe('fast task entry and safe editing', () => {
+  const input = () => screen.getByPlaceholderText('What needs doing?')
+
+  it('keeps the input ready after Enter, with no click back', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    // The next task can be typed straight away.
+    await user.type(input(), 'Water the plants{Enter}')
+
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+    expect(screen.getByText('Water the plants')).toBeInTheDocument()
+  })
+
+  it('holds the keyboard focus in the input after adding', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    expect(input()).toHaveFocus()
+  })
+
+  it('adds a whole run of tasks with Enter alone', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(input(), 'One{Enter}Two{Enter}Three{Enter}')
+
+    expect(screen.getByText('One')).toBeInTheDocument()
+    expect(screen.getByText('Two')).toBeInTheDocument()
+    expect(screen.getByText('Three')).toBeInTheDocument()
+    expect(input()).toHaveValue('')
+  })
+
+  it('clears the box after adding, ready for the next one', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    expect(input()).toHaveValue('')
+  })
+
+  it('still adds a task with the Add button', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(input(), 'Clicked my way in')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+
+    expect(screen.getByText('Clicked my way in')).toBeInTheDocument()
+    expect(input()).toHaveValue('')
+  })
+
+  it('creates no task from an empty box', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(input())
+    await user.keyboard('{Enter}')
+
+    expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+  })
+
+  it('creates no task from whitespace only', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(input(), '    {Enter}')
+
+    expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+  })
+
+  it('trims the words it saves', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(input(), '   Call the dentist   {Enter}')
+
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+  })
+
+  it('saves the new words when I finish an edit', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.clear(screen.getByLabelText('Edit Call the dentist'))
+    await user.type(screen.getByLabelText('Edit Call the dentist'), 'Call the clinic{Enter}')
+
+    expect(screen.getByText('Call the clinic')).toBeInTheDocument()
+    expect(screen.queryByText('Call the dentist')).not.toBeInTheDocument()
+  })
+
+  it('leaves the words unchanged when I back out of an edit', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.clear(screen.getByLabelText('Edit Call the dentist'))
+    await user.type(screen.getByLabelText('Edit Call the dentist'), 'Something else')
+    await user.keyboard('{Escape}')
+
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+    expect(screen.queryByText('Something else')).not.toBeInTheDocument()
+  })
+
+  it('leaves the saved words unchanged if I reload mid-edit', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    // Start an edit and type a half-finished value.
+    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.clear(screen.getByLabelText('Edit Call the dentist'))
+    await user.type(screen.getByLabelText('Edit Call the dentist'), 'Half typed wo')
+
+    // Reload, the way closing and reopening the tab would.
+    cleanup()
+    render(<App />)
+
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+    expect(screen.queryByText('Half typed wo')).not.toBeInTheDocument()
+  })
+
+  it('still adds tasks normally after an edit was left unfinished', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.clear(screen.getByLabelText('Edit Call the dentist'))
+    await user.type(screen.getByLabelText('Edit Call the dentist'), 'Half typed wo')
+
+    cleanup()
+    render(<App />)
+    await user.type(input(), 'Water the plants{Enter}')
+
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+    expect(screen.getByText('Water the plants')).toBeInTheDocument()
+  })
+})
+
 describe('the weekly backup hint', () => {
   // A real download, so the app has a last-backup time to work from.
   async function downloadNow(user) {
