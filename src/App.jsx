@@ -3,6 +3,7 @@ import TaskInput from './components/TaskInput'
 import Filters from './components/Filters'
 import TaskList from './components/TaskList'
 import TaskFooter from './components/TaskFooter'
+import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
 // The task list is saved under the newer name. The older name is still read
@@ -10,6 +11,7 @@ import './App.css'
 // the move to the new name does not happen.
 const STORAGE_KEY = 'tasks'
 const LEGACY_STORAGE_KEY = 'todos'
+const THEME_KEY = 'theme'
 
 function readTasks() {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -21,13 +23,32 @@ function readTasks() {
   return []
 }
 
+function readTheme() {
+  const stored = localStorage.getItem(THEME_KEY)
+  if (stored === 'light' || stored === 'dark') return stored
+
+  // No choice yet, so follow the device.
+  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark'
+  return 'light'
+}
+
 export default function App() {
   const [tasks, setTasks] = useState(readTasks)
   const [currentView, setCurrentView] = useState('all')
+  const [theme, setTheme] = useState(readTheme)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
   }, [tasks])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(THEME_KEY, theme)
+  }, [theme])
+
+  function toggleTheme() {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
+  }
 
   function addTask(text) {
     setTasks(prev => [
@@ -58,7 +79,10 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>tasks</h1>
+      <div className="top-row">
+        <h1>tasks</h1>
+        <ThemeToggle theme={theme} onToggleTheme={toggleTheme} />
+      </div>
       <TaskInput onAdd={addTask} />
       <Filters currentView={currentView} onViewChange={setCurrentView} />
       <TaskList

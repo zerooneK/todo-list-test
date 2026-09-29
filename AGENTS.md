@@ -45,6 +45,16 @@ task, done task, view, clear done. The old "todo" wording is retired.
   version overrides the same names rather than adding new ones
 - The empty list shows one short calm line
 
+## Theme
+
+- One small toggle switches between the light and dark looks; the button
+  reads "Light" or "Dark" and names the look it will switch **to**
+- The choice is stored under the key `theme` and restored on the next visit
+- With no stored choice, the app follows the device's own light/dark setting
+- `index.html` runs a small script before first paint to set the look, so the
+  app never flashes the wrong theme on load
+- `ThemeToggle` receives the current theme and an `onToggleTheme` callback
+
 ## Testing
 
 - Run checks with `npm test` (add `--watch` via `npm run test:watch`)

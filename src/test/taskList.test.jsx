@@ -1,8 +1,19 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
+
+// Pretend the person's device is set to light or dark, so the app's
+// "follow the device" behaviour can be exercised.
+function setDeviceTheme(isDark) {
+  window.matchMedia = vi.fn().mockImplementation(query => ({
+    matches: query.includes('dark') ? isDark : false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }))
+}
 
 describe('the task list', () => {
   it('shows a task I typed', async () => {
@@ -67,6 +78,85 @@ describe('the task list', () => {
     await user.click(screen.getByRole('button', { name: 'Done' }))
 
     expect(screen.getByText('Nothing done yet.')).toBeInTheDocument()
+  })
+})
+
+describe('the theme', () => {
+  beforeEach(() => {
+    document.documentElement.removeAttribute('data-theme')
+  })
+
+  it('offers a single small toggle', () => {
+    render(<App />)
+
+    expect(screen.getByRole('button', { name: /look$/ })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /look$/ })).toHaveLength(1)
+  })
+
+  it('starts in the light look when the device is light', () => {
+    setDeviceTheme(false)
+    render(<App />)
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light')
+  })
+
+  it('follows the device when I have never chosen', () => {
+    setDeviceTheme(true)
+    render(<App />)
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+  })
+
+  it('switches to the dark look when I use the toggle', async () => {
+    const user = userEvent.setup()
+    setDeviceTheme(false)
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /look$/ }))
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+  })
+
+  it('switches back to the light look', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /look$/ }))
+    await user.click(screen.getByRole('button', { name: /look$/ }))
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light')
+  })
+
+  it('opens in the look I chose last time', () => {
+    localStorage.setItem('theme', 'dark')
+    setDeviceTheme(false)
+    render(<App />)
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+  })
+
+  it('remembers the look I just chose for next time', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /look$/ }))
+
+    expect(localStorage.getItem('theme')).toBe('dark')
+  })
+
+  it('keeps my tasks and the current view when I switch look', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Call the plumber')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    await user.click(screen.getByRole('button', { name: /look$/ }))
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+    // Still in the done view, and the task is untouched.
+    expect(screen.getByRole('button', { name: 'Done' }).className).toContain('active')
+    expect(screen.getByText('1 open task')).toBeInTheDocument()
   })
 })
 

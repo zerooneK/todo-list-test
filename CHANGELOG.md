@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+- A dark version of the calm look, with one small toggle to switch between the
+  two (GitHub issue #5)
+  - The choice is remembered, so the app opens in the look last chosen
+  - With no choice made, the app follows the device's own light or dark setting
+  - The look is set before the page paints, so it never flashes the wrong theme
+  - The dark look reuses the same shared values as the light one, so the two
+    stay in step
+  - Text contrast was checked in both looks and meets the readability target
+- Checks for the theme: the toggle exists, both looks apply, the choice is
+  remembered, the device is followed by default, and switching leaves the task
+  list and current view undisturbed
+
 ### Changed
 - The calm look, light version (GitHub issue #4)
   - Muted, soft colours replace the pink and purple; the shiny gradient add
