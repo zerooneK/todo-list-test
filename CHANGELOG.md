@@ -2,7 +2,23 @@
 
 ## [Unreleased]
 
+### Changed
+- Renamed todos to tasks throughout, using the glossary in `CONTEXT.md`
+  (GitHub issue #3)
+  - On screen: heading, placeholder, view buttons, empty states, footer count,
+    and the clear button all use the new wording
+  - The three views are now **All**, **Open**, and **Done**, and mean what they
+    say
+  - Internally: `todos`/`currentFilter` became `tasks`/`currentView`, the
+    components were renamed, and the CSS names follow
+- The task list is now saved under the key `tasks`. The old key `todos` is read
+  as a fallback and is never deleted, so an existing task list survives the
+  change instead of disappearing
+
 ### Added
+- Checks for the three views, for a task list saved under the old name still
+  appearing, for that list not being duplicated, and for the old saved data
+  being left readable
 - Test safety net (GitHub issue #2)
   - `npm test` and `npm run test:watch` scripts
   - Vitest with a jsdom browser-like environment

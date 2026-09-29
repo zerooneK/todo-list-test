@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function TodoInput({ onAdd }) {
+export default function TaskInput({ onAdd }) {
   const [text, setText] = useState('')
 
   function handleSubmit() {
@@ -13,9 +13,9 @@ export default function TodoInput({ onAdd }) {
   return (
     <div className="input-row">
       <input
-        id="todo-input"
+        id="task-input"
         type="text"
-        placeholder="What needs to be done?"
+        placeholder="What needs doing?"
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && handleSubmit()}

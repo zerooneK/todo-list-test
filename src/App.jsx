@@ -1,61 +1,74 @@
 import { useState, useEffect } from 'react'
-import TodoInput from './components/TodoInput'
+import TaskInput from './components/TaskInput'
 import Filters from './components/Filters'
-import TodoList from './components/TodoList'
-import TodoFooter from './components/TodoFooter'
+import TaskList from './components/TaskList'
+import TaskFooter from './components/TaskFooter'
 import './App.css'
 
+// The task list is saved under the newer name. The older name is still read
+// as a fallback, and is never deleted, so a person's tasks survive even if
+// the move to the new name does not happen.
+const STORAGE_KEY = 'tasks'
+const LEGACY_STORAGE_KEY = 'todos'
+
+function readTasks() {
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored) return JSON.parse(stored)
+
+  const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+  if (legacy) return JSON.parse(legacy)
+
+  return []
+}
+
 export default function App() {
-  const [todos, setTodos] = useState(() => {
-    const stored = localStorage.getItem('todos')
-    return stored ? JSON.parse(stored) : []
-  })
-  const [currentFilter, setCurrentFilter] = useState('all')
+  const [tasks, setTasks] = useState(readTasks)
+  const [currentView, setCurrentView] = useState('all')
 
   useEffect(() => {
-    localStorage.setItem('todos', JSON.stringify(todos))
-  }, [todos])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+  }, [tasks])
 
-  function addTodo(text) {
-    setTodos(prev => [
+  function addTask(text) {
+    setTasks(prev => [
       ...prev,
       { id: Date.now(), text, completed: false },
     ])
   }
 
-  function toggleTodo(id) {
-    setTodos(prev =>
+  function toggleTask(id) {
+    setTasks(prev =>
       prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
     )
   }
 
-  function deleteTodo(id) {
-    setTodos(prev => prev.filter(t => t.id !== id))
+  function deleteTask(id) {
+    setTasks(prev => prev.filter(t => t.id !== id))
   }
 
-  function editTodo(id, text) {
-    setTodos(prev =>
+  function editTask(id, text) {
+    setTasks(prev =>
       prev.map(t => t.id === id ? { ...t, text } : t)
     )
   }
 
-  function clearCompleted() {
-    setTodos(prev => prev.filter(t => !t.completed))
+  function clearDone() {
+    setTasks(prev => prev.filter(t => !t.completed))
   }
 
   return (
     <div className="container">
-      <h1>todos</h1>
-      <TodoInput onAdd={addTodo} />
-      <Filters currentFilter={currentFilter} onFilterChange={setCurrentFilter} />
-      <TodoList
-        todos={todos}
-        currentFilter={currentFilter}
-        onToggle={toggleTodo}
-        onDelete={deleteTodo}
-        onEdit={editTodo}
+      <h1>tasks</h1>
+      <TaskInput onAdd={addTask} />
+      <Filters currentView={currentView} onViewChange={setCurrentView} />
+      <TaskList
+        tasks={tasks}
+        currentView={currentView}
+        onToggle={toggleTask}
+        onDelete={deleteTask}
+        onEdit={editTask}
       />
-      <TodoFooter todos={todos} onClear={clearCompleted} />
+      <TaskFooter tasks={tasks} onClearDone={clearDone} />
     </div>
   )
 }

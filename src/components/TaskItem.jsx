@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 
-export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
+export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
   const [editing, setEditing] = useState(false)
-  const [editText, setEditText] = useState(todo.text)
+  const [editText, setEditText] = useState(task.text)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -11,22 +11,22 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
 
   function saveEdit() {
     const trimmed = editText.trim()
-    if (trimmed) onEdit(todo.id, trimmed)
-    else onDelete(todo.id)
+    if (trimmed) onEdit(task.id, trimmed)
+    else onDelete(task.id)
     setEditing(false)
   }
 
   function cancelEdit() {
-    setEditText(todo.text)
+    setEditText(task.text)
     setEditing(false)
   }
 
   return (
-    <li className="todo-item" data-id={todo.id}>
+    <li className="task-item" data-id={task.id}>
       <input
         type="checkbox"
-        checked={todo.completed}
-        onChange={() => onToggle(todo.id)}
+        checked={task.completed}
+        onChange={() => onToggle(task.id)}
       />
       {editing ? (
         <input
@@ -42,13 +42,13 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
         />
       ) : (
         <span
-          className={'todo-text' + (todo.completed ? ' completed' : '')}
-          onDoubleClick={() => { setEditText(todo.text); setEditing(true) }}
+          className={'task-text' + (task.completed ? ' completed' : '')}
+          onDoubleClick={() => { setEditText(task.text); setEditing(true) }}
         >
-          {todo.text}
+          {task.text}
         </span>
       )}
-      <button className="delete-btn" onClick={() => onDelete(todo.id)}>&times;</button>
+      <button className="delete-btn" onClick={() => onDelete(task.id)}>&times;</button>
     </li>
   )
 }

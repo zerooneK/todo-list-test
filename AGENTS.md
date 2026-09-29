@@ -16,11 +16,22 @@ npm run build
 
 ## Structure
 
-- `src/App.jsx` — root component: owns `todos` + `currentFilter` state, passes props down
+- `src/App.jsx` — root component: owns `tasks` + `currentView` state, passes props down
 - `src/App.css` — all styling (Poppins font via `@import`)
-- `src/components/` — stateless components: TodoInput, Filters, TodoList, TodoItem, TodoFooter
+- `src/components/` — stateless components: TaskInput, Filters, TaskList, TaskItem, TaskFooter
 - `src/test/` — test setup plus the checks; see the testing seam note below
 - `src/main.jsx` — entry point (do not edit)
+
+## Saved data
+
+- Saved under the key `tasks` in `localStorage`
+- The older key `todos` is still read as a fallback and is never deleted, so a
+  task list saved before the rename survives
+
+## Language
+
+The app uses the glossary in `CONTEXT.md` throughout: task, task list, open
+task, done task, view, clear done. The old "todo" wording is retired.
 
 ## Testing
 
@@ -41,9 +52,9 @@ npm run build
 
 ## Key conventions
 
-- Each todo: `{ id: number, text: string, completed: boolean }`
-- Editing uses local `useState` in TodoItem — blur/Enter commits, Escape cancels
-- Filter values: `'all'`, `'active'`, `'completed'`
+- Each task: `{ id: number, text: string, completed: boolean }`
+- Editing uses local `useState` in TaskItem — blur/Enter commits, Escape cancels
+- View values: `'all'`, `'open'`, `'done'`
 - CSS class `.hidden` toggles visibility; `.completed` toggles strikethrough
 
 ## Workflow

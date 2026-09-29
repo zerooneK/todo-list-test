@@ -1,15 +1,19 @@
-const FILTERS = ['all', 'active', 'completed']
+const VIEWS = [
+  { value: 'all', label: 'All' },
+  { value: 'open', label: 'Open' },
+  { value: 'done', label: 'Done' },
+]
 
-export default function Filters({ currentFilter, onFilterChange }) {
+export default function Filters({ currentView, onViewChange }) {
   return (
     <div className="filters">
-      {FILTERS.map(f => (
+      {VIEWS.map(view => (
         <button
-          key={f}
-          className={'filter-btn' + (currentFilter === f ? ' active' : '')}
-          onClick={() => onFilterChange(f)}
+          key={view.value}
+          className={'filter-btn' + (currentView === view.value ? ' active' : '')}
+          onClick={() => onViewChange(view.value)}
         >
-          {f.charAt(0).toUpperCase() + f.slice(1)}
+          {view.label}
         </button>
       ))}
     </div>
