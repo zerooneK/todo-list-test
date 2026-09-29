@@ -38,6 +38,36 @@ describe('the task list', () => {
     expect(screen.getByRole('button', { name: 'Open' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument()
   })
+
+  it('shows one short calm line when there is nothing to show', () => {
+    render(<App />)
+
+    const line = screen.getByText('Nothing here yet.')
+    expect(line).toBeInTheDocument()
+    // One short line, not a paragraph of instructions.
+    expect(line.textContent.trim().split('\n')).toHaveLength(1)
+  })
+
+  it('shows a calm line for the open view when everything is done', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Buy milk')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+
+    expect(screen.getByText('Nothing left to do.')).toBeInTheDocument()
+  })
+
+  it('shows a calm line for the done view when nothing is done yet', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+
+    expect(screen.getByText('Nothing done yet.')).toBeInTheDocument()
+  })
 })
 
 describe('coming back to a task list saved before the rename', () => {

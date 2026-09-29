@@ -9,8 +9,8 @@ export default function TaskList({ tasks, currentView, onToggle, onDelete, onEdi
 
   if (filtered.length === 0) {
     const msg = currentView === 'done'
-      ? 'No done tasks yet.'
-      : currentView === 'open' ? 'No open tasks. Enjoy the quiet.' : 'No tasks yet. Add one above!'
+      ? 'Nothing done yet.'
+      : currentView === 'open' ? 'Nothing left to do.' : 'Nothing here yet.'
     return <p className="empty-msg">{msg}</p>
   }
 

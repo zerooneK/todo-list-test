@@ -1,0 +1,32 @@
+/*
+ * Shared design values.
+ *
+ * These are the single place colours and spacing are defined, so the calm
+ * look and the later dark version read from the same vocabulary instead of
+ * repeating literals. The dark ticket overrides the same names.
+ */
+
+:root {
+  /* Colours — muted and soft */
+  --color-page: #fafaf9;
+  --color-surface: #ffffff;
+  --color-text: #3f3f3f;
+  --color-text-quiet: #8a8a8a;
+  --color-text-faint: #b4b4b4;
+  --color-line: #ececea;
+  --color-accent: #7d8a99;
+  --color-danger: #a58080;
+
+  /* Spacing — generous, never cramped */
+  --space-tight: 8px;
+  --space: 16px;
+  --space-wide: 24px;
+  --space-roomy: 40px;
+
+  /* Shape and type */
+  --radius: 6px;
+  --font-size-body: 16px;
+  --font-size-quiet: 14px;
+  --font-size-label: 13px;
+}
+

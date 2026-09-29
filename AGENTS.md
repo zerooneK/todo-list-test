@@ -17,7 +17,10 @@ npm run build
 ## Structure
 
 - `src/App.jsx` — root component: owns `tasks` + `currentView` state, passes props down
-- `src/App.css` — all styling (Poppins font via `@import`)
+- `src/index.css` — shared design values (colours, spacing, type) as CSS
+  variables; the single source of truth for both looks
+- `src/App.css` — all styling, reading the shared values (Poppins font via
+  `@import`)
 - `src/components/` — stateless components: TaskInput, Filters, TaskList, TaskItem, TaskFooter
 - `src/test/` — test setup plus the checks; see the testing seam note below
 - `src/main.jsx` — entry point (do not edit)
@@ -32,6 +35,15 @@ npm run build
 
 The app uses the glossary in `CONTEXT.md` throughout: task, task list, open
 task, done task, view, clear done. The old "todo" wording is retired.
+
+## The calm look
+
+- Muted, soft colours; no gradients, no decorative shadows
+- Nothing moves: no transitions, no animations, no transforms
+- Generous spacing, and it stays readable on a narrow screen
+- Colours and spacing live as CSS variables in `src/index.css`; the dark
+  version overrides the same names rather than adding new ones
+- The empty list shows one short calm line
 
 ## Testing
 

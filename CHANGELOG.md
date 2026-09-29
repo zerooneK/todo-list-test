@@ -3,6 +3,15 @@
 ## [Unreleased]
 
 ### Changed
+- The calm look, light version (GitHub issue #4)
+  - Muted, soft colours replace the pink and purple; the shiny gradient add
+    button is now a plain, quiet one
+  - The large decorative heading is replaced by a small quiet "tasks" label
+  - Nothing moves: transitions, animations, and hover lifts are gone
+  - Spacing is more generous, and the layout stays readable on a narrow screen
+  - The empty list shows one short calm line instead of an instruction
+  - Colours and spacing are now shared values in `src/index.css`, so the dark
+    version can reuse the same names
 - Renamed todos to tasks throughout, using the glossary in `CONTEXT.md`
   (GitHub issue #3)
   - On screen: heading, placeholder, view buttons, empty states, footer count,
