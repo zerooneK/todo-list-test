@@ -1,7 +1,7 @@
 import React from 'react'
-import { act, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 
 // Pretend the person's device is set to light or dark, so the app's
@@ -554,6 +554,156 @@ describe('backing up and restoring', () => {
 
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
     expect(screen.getByText('Recovered')).toBeInTheDocument()
+  })
+})
+
+describe('the weekly backup hint', () => {
+  // A real download, so the app has a last-backup time to work from.
+  async function downloadNow(user) {
+    await user.click(screen.getByRole('button', { name: 'Download my tasks' }))
+  }
+
+  function hint() {
+    return screen.queryByText(/It has been a while since you downloaded/)
+  }
+
+  // Remounting is what a later visit actually looks like to the app.
+  function laterVisit(daysLater) {
+    vi.setSystemTime(Date.now() + daysLater * 24 * 60 * 60 * 1000)
+    cleanup()
+    render(<App />)
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    URL.createObjectURL = vi.fn(() => 'blob:mock')
+    URL.revokeObjectURL = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('stays quiet when the last download was under a week ago', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+
+    laterVisit(6)
+
+    expect(hint()).not.toBeInTheDocument()
+  })
+
+  it('appears once the last download is a week or more old', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+
+    laterVisit(7)
+
+    expect(hint()).toBeInTheDocument()
+  })
+
+  it('says why, in one quiet line', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+    laterVisit(7)
+
+    expect(hint()).toHaveTextContent('It has been a while since you downloaded a backup')
+  })
+
+  it('can be dismissed and does not come straight back', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+    laterVisit(8)
+
+    await user.click(screen.getByRole('button', { name: 'Remind me later' }))
+
+    expect(hint()).not.toBeInTheDocument()
+  })
+
+  it('stays dismissed on a later visit', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+    laterVisit(8)
+    await user.click(screen.getByRole('button', { name: 'Remind me later' }))
+
+    laterVisit(9)
+
+    expect(hint()).not.toBeInTheDocument()
+  })
+
+  it('goes quiet once I download a backup', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+    laterVisit(8)
+    expect(hint()).toBeInTheDocument()
+
+    await downloadNow(user)
+
+    expect(hint()).not.toBeInTheDocument()
+  })
+
+  it('stays quiet for another week after I download', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+    laterVisit(8)
+    await downloadNow(user)
+
+    laterVisit(6)
+    expect(hint()).not.toBeInTheDocument()
+
+    laterVisit(2)
+    expect(hint()).toBeInTheDocument()
+  })
+
+  it('comes back for the next cycle once a dismissed person acts', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+    laterVisit(8)
+    await user.click(screen.getByRole('button', { name: 'Remind me later' }))
+
+    // Having acted on it, a later week can reasonably mention it again.
+    await downloadNow(user)
+    laterVisit(8)
+
+    expect(hint()).toBeInTheDocument()
+  })
+
+  it('never piles up when the app is left unused for a long time', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    await downloadNow(user)
+
+    // A year away: exactly one line, not one per missed week.
+    laterVisit(365)
+
+    const lines = screen.getAllByText(/It has been a while since you downloaded/)
+    expect(lines).toHaveLength(1)
+  })
+
+  it('does not get in the way of using the app', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+    laterVisit(30)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Still works')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+
+    expect(screen.getByText('Still works')).toBeInTheDocument()
+    expect(hint()).toBeInTheDocument()
+  })
+
+  it('appears for a first-time user who has never backed up', () => {
+    render(<App />)
+
+    expect(hint()).toBeInTheDocument()
   })
 })
 

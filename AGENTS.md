@@ -79,6 +79,19 @@ task, done task, view, clear done. The old "todo" wording is retired.
   is refused with a message and nothing is changed
 - The file input is reset after each choice, so the same file can be re-picked
 
+## The weekly backup hint
+
+- `BackupHint` renders the single quiet line; `App.jsx` decides whether it is
+  due
+- Due when `lastBackup` is 7+ days old, or when no backup was ever taken
+- A dismissal is stored as a timestamp and is **not** stored as a boolean, so
+  the hint is derived from a clock rather than counted. An app left unused for
+  a year shows exactly one line, not one per missed week
+- A dismissal only counts until the next download: someone who acts on the hint
+  can be reminded again in a later week
+- Downloading a backup clears the hint by resetting `lastBackup`
+- Wording stays quiet and factual; no urgency, no shouting
+
 ## Testing
 
 - Run checks with `npm test` (add `--watch` via `npm run test:watch`)

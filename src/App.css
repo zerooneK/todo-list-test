@@ -216,6 +216,40 @@ h1 {
   display: none !important;
 }
 
+/* The backup hint: one quiet line, and it does not shout */
+.backup-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-tight) var(--space);
+  margin-top: var(--space-wide);
+  padding: var(--space) var(--space);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+}
+
+.backup-hint-text {
+  flex: 1 1 20ch;
+  font-size: var(--font-size-label);
+  line-height: 1.6;
+  color: var(--color-text-quiet);
+}
+
+#backup-hint-dismiss {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--font-size-label);
+  color: var(--color-text-faint);
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#backup-hint-dismiss:hover {
+  color: var(--color-text);
+}
+
 /* Backups: two quiet buttons, and a plain statement before anything is lost */
 .backup {
   display: flex;

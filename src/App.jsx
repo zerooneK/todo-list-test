@@ -6,6 +6,7 @@ import TaskFooter from './components/TaskFooter'
 import ThemeToggle from './components/ThemeToggle'
 import UndoOffer from './components/UndoOffer'
 import BackupControls from './components/BackupControls'
+import BackupHint from './components/BackupHint'
 import './App.css'
 
 // The task list is saved under the newer name. The older name is still read
@@ -14,8 +15,20 @@ import './App.css'
 const STORAGE_KEY = 'tasks'
 const LEGACY_STORAGE_KEY = 'todos'
 const THEME_KEY = 'theme'
+const LAST_BACKUP_KEY = 'lastBackup'
+// The moment the person dismissed the hint, so it does not come back.
+const HINT_DISMISSED_KEY = 'backupHintDismissed'
 // How long the Undo offer stays before it clears itself.
 const UNDO_TIMEOUT_MS = 5000
+// A quiet nudge after this long without a download.
+const BACKUP_INTERVAL_DAYS = 7
+const DAY_MS = 24 * 60 * 60 * 1000
+
+// Read a stored timestamp, or null when it is absent or unreadable.
+function readStamp(key) {
+  const value = Number(localStorage.getItem(key))
+  return Number.isFinite(value) && value > 0 ? value : null
+}
 
 function readTasks() {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -44,6 +57,24 @@ export default function App() {
   // first rather than stacking a second offer. A removal may be a single task
   // or a whole sweep, so it holds a list. Null means no offer is shown.
   const [removal, setRemoval] = useState(null)
+  // When a backup was last downloaded, and when the hint was last dismissed.
+  // The hint is derived from these timestamps rather than counted, so an app
+  // left unused for a long time never piles up reminders.
+  const [lastBackup, setLastBackup] = useState(() => readStamp(LAST_BACKUP_KEY))
+  const [hintDismissed, setHintDismissed] = useState(() => readStamp(HINT_DISMISSED_KEY))
+
+  // Shown when it has been a week or more since the last download, unless the
+  // person has dismissed it since then. Never downloaded at all counts as due:
+  // the list has never been backed up.
+  const daysSinceBackup = lastBackup === null
+    ? Infinity
+    : (Date.now() - lastBackup) / DAY_MS
+  // A dismissal only counts until the next download; acting on the hint by
+  // backing up brings the reminder back for the next cycle, not before.
+  const dismissedSinceLastBackup = hintDismissed !== null
+    && (lastBackup === null || hintDismissed > lastBackup)
+  const hintShouldShow = daysSinceBackup >= BACKUP_INTERVAL_DAYS
+    && !dismissedSinceLastBackup
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
@@ -125,9 +156,20 @@ export default function App() {
     )
   }
 
-  // The weekly backup hint is a later ticket; the download is recorded now so
-  // the wiring is in one place.
-  function recordBackup() {}
+  // Downloading is acting on the hint, so it records the moment and the hint
+  // goes quiet on its own.
+  function recordBackup() {
+    const now = Date.now()
+    setLastBackup(now)
+    localStorage.setItem(LAST_BACKUP_KEY, String(now))
+  }
+
+  // Dismissed is remembered, so returning to the app stays calm.
+  function dismissHint() {
+    const now = Date.now()
+    setHintDismissed(now)
+    localStorage.setItem(HINT_DISMISSED_KEY, String(now))
+  }
 
   function restoreTasks(restored) {
     setTasks(restored)
@@ -152,6 +194,7 @@ export default function App() {
         onEdit={editTask}
       />
       <TaskFooter tasks={tasks} onClearDone={clearDone} />
+      <BackupHint show={hintShouldShow} onDismiss={dismissHint} />
       <BackupControls
         tasks={tasks}
         onRestore={restoreTasks}

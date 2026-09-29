@@ -3,6 +3,16 @@
 ## [Unreleased]
 
 ### Added
+- The gentle weekly backup hint (GitHub issue #9) — so the backup habit survives
+  without nagging
+  - One quiet line appears once it has been seven days or more since the last
+    download, and for a first-time user who has never backed up at all
+  - It can be dismissed with "Remind me later", and the dismissal is
+    remembered, so returning to the app stays calm
+  - Downloading a backup clears it straight away
+  - It is derived from a timestamp rather than counted, so an app left unused
+    for a long time shows exactly one line instead of piling up
+  - It never blocks the app; tasks can still be added and worked on as normal
 - Download and restore a backup (GitHub issue #8) — the real safety net for
   tasks held in the browser
   - "Download my tasks" saves the whole list to the computer as a dated file,
