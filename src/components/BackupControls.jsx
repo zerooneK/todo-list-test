@@ -70,6 +70,8 @@ export default function BackupControls({ tasks, onRestore, onDownloaded }) {
 
     setProblem(null)
     setPending({
+      // The ids here are placeholders only. The list is re-identified when the
+      // restore is confirmed, so whatever a file carried is never trusted.
       tasks: parsed.tasks.map((t, i) => ({
         id: Number.isFinite(t.id) ? t.id : i,
         text: t.text,

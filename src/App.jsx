@@ -8,6 +8,7 @@ import UndoOffer from './components/UndoOffer'
 import BackupControls from './components/BackupControls'
 import BackupHint from './components/BackupHint'
 import PrivateWindowWarning from './components/PrivateWindowWarning'
+import { asTaskList, newTask } from './taskIdentity'
 import {
   detectStorage,
   readJson,
@@ -40,12 +41,12 @@ function readStamp(key) {
 
 function readTasks() {
   const stored = readJson(STORAGE_KEY, null)
-  if (Array.isArray(stored)) return stored
+  if (Array.isArray(stored)) return asTaskList(stored)
 
   // The older name is still read as a fallback, so a list saved before the
   // rename survives.
   const legacy = readJson(LEGACY_STORAGE_KEY, null)
-  if (Array.isArray(legacy)) return legacy
+  if (Array.isArray(legacy)) return asTaskList(legacy)
 
   return []
 }
@@ -115,10 +116,7 @@ export default function App() {
   }
 
   function addTask(text) {
-    setTasks(prev => [
-      ...prev,
-      { id: Date.now(), text, completed: false },
-    ])
+    setTasks(prev => [...prev, newTask(text)])
   }
 
   function toggleTask(id) {
@@ -190,7 +188,9 @@ export default function App() {
   }
 
   function restoreTasks(restored) {
-    setTasks(restored)
+    // The list is re-identified on the way in, so a backup that carried
+    // missing or repeated ids cannot bring that problem back with it.
+    setTasks(asTaskList(restored))
     // A restore is a deliberate replacement, not a removal, so no Undo is
     // offered for it. The person was told the consequence first.
     setRemoval(null)

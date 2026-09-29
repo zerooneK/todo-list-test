@@ -27,6 +27,22 @@
     alert, and nothing moves or animates
 
 ### Fixed
+- Two tasks could be added in the same millisecond and become one task. The
+  task's id was `Date.now()`, and the app finds a task by comparing ids, so
+  two tasks sharing a value are one task: ticking one marked every twin done,
+  and removing one removed them all. Reproduced before fixing — three tasks
+  added in one millisecond, ticking the first marked all three done
+- Restoring a backup could bring the same problem back. Restored tasks were
+  given ids by array position, so a file whose ids were not numbers fell back
+  to positions 0, 1, 2 — and restoring then adding produced duplicate ids, with
+  no clock pinning needed to hit it
+- A backup file with missing or repeated ids is now handled, rather than
+  trusted. Ids are re-minted on the way in
+- `src/taskIdentity.js` now owns what names a task. Ids are minted there and
+  nowhere else, using `crypto.randomUUID` with a `getRandomValues` fallback for
+  when the app is opened outside a secure context, such as over plain http
+- Existing saved tasks need no migration: they are re-identified on load, so
+  older numeric ids keep working
 - The app could crash outright when the browser refused storage. A private
   window that rejects writes threw `QuotaExceededError` through the render and
   the app stopped working entirely, with an empty screen and no way to recover

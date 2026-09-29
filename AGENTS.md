@@ -151,6 +151,10 @@ task, done task, view, clear done. The old "todo" wording is retired.
 ## Testing
 
 - Run checks with `npm test` (add `--watch` via `npm run test:watch`)
+- Uniqueness is guaranteed by construction, so the committed checks do not pin
+  the clock to prove a collision cannot recur: doing so reaches past the seam.
+  The reachable case — a backup file carrying repeated or missing ids — is
+  covered instead, by uploading such a file and using the app
 - **One seam: the app as the person uses it.** Tests render the app, drive it
   with real typing and clicking, and assert only on what is visible.
 - Do not test internal helpers, component state, storage keys, or CSS class
@@ -167,7 +171,16 @@ task, done task, view, clear done. The old "todo" wording is retired.
 
 ## Key conventions
 
-- Each task: `{ id: number, text: string, completed: boolean }`
+- Each task: `{ id: string, text: string, completed: boolean }`
+- `src/taskIdentity.js` owns what names a task: `newTask`, `newTaskId`, and
+  `asTaskList`. Ids must be unique, because the app finds "this" task by
+  comparing them; a timestamp was not safe, since two tasks can be added in the
+  same millisecond. Ids are minted in that module and nowhere else
+- A list arriving from anywhere — a backup file, saved data, a hand-edited file
+  — goes through `asTaskList`, which keeps ids that are usable and unique and
+  re-mints the rest. That is why old saved tasks need no migration
+- `asTaskList` runs on load, so ids are re-minted on each visit. Nothing refers
+  to a task outside the task list, so this is invisible
 - Editing uses local `useState` in TaskItem — blur/Enter commits, Escape cancels
 - An edit is deliberately transient: the in-progress text lives only in
   `TaskItem`'s local state and is never written to storage as it is typed, so

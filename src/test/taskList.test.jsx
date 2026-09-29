@@ -557,6 +557,121 @@ describe('backing up and restoring', () => {
   })
 })
 
+describe('task identity', () => {
+  // A backup file that a person could really end up with: hand-edited, or from
+  // an older version. It carries ids that are not unique.
+  function duplicateIdBackup() {
+    return new File(
+      [JSON.stringify({
+        app: 'tasks',
+        version: 1,
+        tasks: [
+          { id: 1, text: 'First restored', completed: false },
+          { id: 1, text: 'Second restored', completed: false },
+        ],
+      })],
+      'tasks-2026-01-01.json',
+      { type: 'application/json' }
+    )
+  }
+
+  async function restoreFile(user, file) {
+    await user.upload(screen.getByLabelText('Choose a backup file'), file)
+    await user.click(screen.getByRole('button', { name: 'Replace my list' }))
+  }
+
+  it('keeps a restored task identifiable even when a file repeats its ids', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await restoreFile(user, duplicateIdBackup())
+
+    // Both tasks are there, and ticking one must not tick the other.
+    expect(screen.getByText('First restored')).toBeInTheDocument()
+    expect(screen.getByText('Second restored')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: 'Mark First restored as done' }))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark First restored as done' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Second restored as done' })).not.toBeChecked()
+  })
+
+  it('can remove one restored task without touching its twin', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await restoreFile(user, duplicateIdBackup())
+
+    await user.click(screen.getByRole('button', { name: 'Remove First restored' }))
+
+    expect(screen.queryByText('First restored')).not.toBeInTheDocument()
+    expect(screen.getByText('Second restored')).toBeInTheDocument()
+  })
+
+  it('can edit one restored task without changing its twin', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await restoreFile(user, duplicateIdBackup())
+
+    await user.dblClick(screen.getByText('First restored'))
+    await user.clear(screen.getByLabelText('Edit First restored'))
+    await user.type(screen.getByLabelText('Edit First restored'), 'Renamed{Enter}')
+
+    expect(screen.getByText('Renamed')).toBeInTheDocument()
+    expect(screen.getByText('Second restored')).toBeInTheDocument()
+  })
+
+  it('keeps tasks added after a restore separate from restored ones', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await restoreFile(user, duplicateIdBackup())
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Added later{Enter}')
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Added later as done' }))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark Added later as done' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark First restored as done' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Second restored as done' })).not.toBeChecked()
+  })
+
+  it('restores a file whose tasks have no ids at all', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await restoreFile(user, new File(
+      [JSON.stringify({
+        app: 'tasks',
+        version: 1,
+        tasks: [
+          { text: 'No id one', completed: false },
+          { text: 'No id two', completed: false },
+        ],
+      })],
+      'tasks-2026-01-01.json',
+      { type: 'application/json' }
+    ))
+
+    await user.click(screen.getByRole('checkbox', { name: 'Mark No id one as done' }))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark No id one as done' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark No id two as done' })).not.toBeChecked()
+  })
+
+  it('keeps every task separately identifiable after a reload', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await restoreFile(user, duplicateIdBackup())
+
+    cleanup()
+    render(<App />)
+
+    // Saved and reloaded, the two are still independent.
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Second restored as done' }))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark Second restored as done' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark First restored as done' })).not.toBeChecked()
+  })
+})
+
 describe('the private window warning', () => {
   const warning = () => screen.queryByText(/This is a private window/)
 
