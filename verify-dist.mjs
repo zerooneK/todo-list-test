@@ -1,12 +1,19 @@
 // Drives the REAL production bundle in jsdom: the same JS Vercel serves.
 import { JSDOM, VirtualConsole } from 'jsdom'
 import { readFileSync } from 'fs'
+import { checkDeviceFallback, checkThemePrePaint } from './verify-theme.mjs'
+
+const results = []
+const check = (name, ok) => { results.push({ name, ok }); if (!ok) console.log(`FAIL  ${name}`) }
 
 const html = readFileSync('dist/index.html', 'utf8')
 const vc = new VirtualConsole()
 const errors = []
 vc.on('jsdomError', e => errors.push(e.message))
 vc.on('error', (...a) => errors.push(String(a)))
+
+// The look the page paints on its very first frame, before the app runs. This
+// is the flash people notice, and nothing else here covers it.
 
 const dom = new JSDOM(html, {
   runScripts: 'dangerously',
@@ -21,6 +28,11 @@ window.matchMedia = window.matchMedia || (_q => ({ matches: false, addEventListe
 // Load the built bundle exactly as the browser would.
 const jsPath = 'dist' + html.match(/src="(\/assets\/index-[^"]+\.js)"/)[1]
 const code = readFileSync(jsPath, 'utf8')
+
+// The look the page paints on its very first frame, before the app runs. This
+// is the flash people notice, and nothing else here covers it.
+await checkThemePrePaint(html, code, check)
+
 window.eval(code)
 await new Promise(r => setTimeout(r, 300))
 
@@ -28,8 +40,6 @@ const doc = window.document
 const $ = sel => doc.querySelector(sel)
 const byText = (sel, text) => [...doc.querySelectorAll(sel)].find(e => e.textContent.trim() === text)
 const input = $('#task-input')
-const results = []
-const check = (name, ok) => { results.push({ name, ok }); if (!ok) console.log(`FAIL  ${name}`) }
 
 check('app rendered the input', !!input)
 check('empty list shows calm line', doc.body.textContent.includes('Nothing here yet'))
@@ -98,6 +108,9 @@ const motion = css
 check('no animation or transition', !/@keyframes|transition:|animation:/.test(motion))
 check('motion is actively switched off', /transition\s*:\s*none\s*!important/.test(css))
 check('no gradient', !/gradient/.test(css))
+
+// The stylesheet's own device fallback, checked against the real built CSS.
+checkDeviceFallback(css, check)
 
 check('no console errors', errors.length === 0)
 

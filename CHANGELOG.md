@@ -27,6 +27,17 @@
     alert, and nothing moves or animates
 
 ### Added
+- A check for the look the page paints before the app runs, in
+  `verify-theme.mjs`. The pre-paint script in `index.html` decides the theme
+  before the bundle loads, so it cannot import from the app, and nothing was
+  checking it: a broken script would have shown a flash of the wrong look and
+  every other check would still pass. The pre-paint script and the real app are
+  now driven separately and required to agree for every combination of a stored
+  choice and the device's own setting
+- The stylesheet's own device fallback is now checked against the built CSS. It
+  is the only thing that applies the dark look if the pre-paint script is
+  blocked, so losing it would leave someone who never chose a theme looking at
+  the wrong page
 - `src/views.js`, which owns what a view is: its label, which tasks it shows,
   and what it says when it shows nothing. Adding a view is now one edit in one
   file rather than three edits across two

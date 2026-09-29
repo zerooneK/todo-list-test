@@ -43,6 +43,10 @@ npm run verify:dist
 - `verify-dist.mjs` drives the real production bundle in jsdom as a person
   would: add with Enter, tick, remove with Undo, switch theme, and confirms
   the calm style holds (no motion, no gradients) with no console errors
+- `verify-theme.mjs` covers the look before the first paint, which nothing else
+  reaches. It runs the pre-paint script alone, then the real app, and requires
+  them to agree for every combination of stored choice and device, so a future
+  edit to either side fails instead of silently reintroducing the flash
 - `verify-reload.mjs` opens the built app twice against the same storage to
   prove tasks survive a page reload, and that a backup taken in the built app
   is restorable
@@ -92,6 +96,14 @@ task, done task, view, clear done. The old "todo" wording is retired.
 - With no stored choice, the app follows the device's own light/dark setting
 - `index.html` runs a small script before first paint to set the look, so the
   app never flashes the wrong theme on load
+- The rule "a stored choice wins, otherwise the device decides" necessarily
+  exists in more than one place: the pre-paint script cannot import from a
+  bundle that has not loaded. What is pinned is that the copies agree, over
+  every combination of stored choice and device, by driving the real built page
+- The `@media (prefers-color-scheme: dark)` rule in `index.css` is not a third
+  copy. It is the only thing that applies the dark look if the pre-paint script
+  is blocked or throws, so it is checked against the built CSS rather than
+  assumed
 - `ThemeToggle` receives the current theme and an `onToggleTheme` callback
 
 ## Undo
