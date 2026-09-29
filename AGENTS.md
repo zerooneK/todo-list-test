@@ -55,6 +55,15 @@ task, done task, view, clear done. The old "todo" wording is retired.
   app never flashes the wrong theme on load
 - `ThemeToggle` receives the current theme and an `onToggleTheme` callback
 
+## Undo
+
+- `App.jsx` holds at most one removal at a time, so a second removal replaces
+  the first rather than stacking a second offer
+- The removal is cleared by a short timeout (`UNDO_TIMEOUT_MS`), so the offer
+  needs no dismissal; the timer is cleared on the next removal
+- Undo restores the task and its original position, done state included
+- The offer is small and quiet, and deliberately does not animate
+
 ## Testing
 
 - Run checks with `npm test` (add `--watch` via `npm run test:watch`)

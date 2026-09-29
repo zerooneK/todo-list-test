@@ -3,6 +3,18 @@
 ## [Unreleased]
 
 ### Added
+- Undo for a single task removal (GitHub issue #6)
+  - Removing a task still happens straight away, with nothing to confirm
+  - A small quiet "Removed — Undo" offer appears straight after, and clears
+    itself after a few seconds
+  - Undo puts the task back exactly as it was, in its original place and with
+    its done state intact
+  - Only one offer exists at a time: a second removal replaces the first
+  - The offer never returns once used or expired
+- The remove button now names the task it removes, so it is clear what will go
+- Checks for the Undo offer: it is absent when nothing was removed, appears
+  after a removal, restores position and done state, expires on its own, is
+  used up for good, and is replaced rather than stacked
 - A dark version of the calm look, with one small toggle to switch between the
   two (GitHub issue #5)
   - The choice is remembered, so the app opens in the look last chosen

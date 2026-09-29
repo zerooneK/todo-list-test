@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
@@ -78,6 +78,121 @@ describe('the task list', () => {
     await user.click(screen.getByRole('button', { name: 'Done' }))
 
     expect(screen.getByText('Nothing done yet.')).toBeInTheDocument()
+  })
+})
+
+describe('removing a task', () => {
+  async function addTask(user, text) {
+    await user.type(screen.getByPlaceholderText('What needs doing?'), text)
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+  }
+
+  it('removes a task straight away, with nothing to confirm', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Buy milk')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
+
+    expect(screen.queryByText('Buy milk')).not.toBeInTheDocument()
+    // No confirmation dialog appeared to get in the way.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('shows no Undo offer when I have removed nothing', () => {
+    render(<App />)
+
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
+
+  it('offers Undo right after I remove a task', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Buy milk')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
+
+    expect(screen.getByText('Removed')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+  })
+
+  it('brings the task back, in the right place, when I use Undo', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'First')
+    await addTask(user, 'Second')
+    await addTask(user, 'Third')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Second' }))
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    const shown = screen.getAllByRole('listitem').map(li => li.textContent)
+    expect(shown[0]).toContain('First')
+    expect(shown[1]).toContain('Second')
+    expect(shown[2]).toContain('Third')
+  })
+
+  it('brings back a done task still marked as done', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Water the plants')
+    await user.click(screen.getByRole('checkbox'))
+
+    await user.click(screen.getByRole('button', { name: 'Remove Water the plants' }))
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    expect(screen.getByRole('checkbox')).toBeChecked()
+  })
+
+  it('clears the offer on its own after a short while', async () => {
+    // Type with real timers, then switch to a clock we can wind forward. The
+    // fake clock advances by itself so clicking still behaves.
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Buy milk')
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000)
+    })
+
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
+
+  it('never brings the offer back once it has been used', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Buy milk')
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000)
+    })
+
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+    expect(screen.getByText('Buy milk')).toBeInTheDocument()
+  })
+
+  it('replaces the first offer with the second instead of stacking them', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'First')
+    await addTask(user, 'Second')
+
+    await user.click(screen.getByRole('button', { name: 'Remove First' }))
+    await user.click(screen.getByRole('button', { name: 'Remove Second' }))
+
+    // One offer only, and it belongs to the most recent removal.
+    expect(screen.getAllByRole('button', { name: 'Undo' })).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(screen.getByText('Second')).toBeInTheDocument()
+    expect(screen.queryByText('First')).not.toBeInTheDocument()
   })
 })
 

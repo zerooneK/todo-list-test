@@ -48,7 +48,11 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
           {task.text}
         </span>
       )}
-      <button className="delete-btn" onClick={() => onDelete(task.id)}>&times;</button>
+      <button
+        className="delete-btn"
+        onClick={() => onDelete(task.id)}
+        aria-label={`Remove ${task.text}`}
+      >&times;</button>
     </li>
   )
 }
