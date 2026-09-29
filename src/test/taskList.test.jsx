@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { StrictMode } from 'react'
 import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -128,7 +128,7 @@ describe('removing a task', () => {
 
     await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
 
-    expect(screen.getByText('Removed')).toBeInTheDocument()
+    expect(screen.getByText(/1 task removed/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
   })
 
@@ -248,7 +248,7 @@ describe('clearing every done task', () => {
 
     await sweep(user)
 
-    expect(screen.getByText('Removed')).toBeInTheDocument()
+    expect(screen.getByText(/1 task removed/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
   })
 
@@ -1613,5 +1613,210 @@ describe('the tab order itself', () => {
     const dismiss = screen.getByRole('button', { name: 'Remind me later' })
     expect(dismiss).toBeInTheDocument()
     expect(await tabUntil(user, el => el === dismiss)).toBe(true)
+  })
+})
+
+describe('what the undo offer says', () => {
+  // The offer used to say only "Removed", which was true of none of the cases
+  // it actually covered. These check it describes what it is really holding,
+  // and admits when an earlier removal is no longer undoable.
+
+  async function addTask(user, text, done = false) {
+    await user.type(input(), `${text}{Enter}`)
+    if (done) {
+      await user.click(screen.getByRole('checkbox', { name: `Mark ${text} as done` }))
+    }
+  }
+
+  it('says how many tasks a removal took', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Buy milk')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
+
+    expect(screen.getByText(/1 task removed/)).toBeInTheDocument()
+  })
+
+  it('says how many the clear-done sweep took', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Finished one', true)
+    await addTask(user, 'Finished two', true)
+    await addTask(user, 'Finished three', true)
+
+    await user.click(screen.getByRole('button', { name: 'Clear done' }))
+
+    expect(screen.getByText(/3 tasks removed/)).toBeInTheDocument()
+  })
+
+  it('uses the singular for one task, even in a sweep of one', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Finished one', true)
+
+    await user.click(screen.getByRole('button', { name: 'Clear done' }))
+
+    expect(screen.getByText(/1 task removed/)).toBeInTheDocument()
+  })
+
+  it('admits when a second removal made an earlier one undoable no more', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'First')
+    await addTask(user, 'Second')
+
+    await user.click(screen.getByRole('button', { name: 'Remove First' }))
+    // Nothing is lost yet, so nothing is reported as lost.
+    expect(screen.queryByText(/no longer be undone/)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Remove Second' }))
+
+    // The first removal is now unrecoverable, and the offer says so.
+    expect(screen.getByText(/1 earlier task can no longer be undone/)).toBeInTheDocument()
+  })
+
+  it('counts every task stranded by an earlier sweep', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Done one', true)
+    await addTask(user, 'Done two', true)
+    await addTask(user, 'Still open')
+
+    // The sweep holds two, and stranding them costs nothing.
+    await user.click(screen.getByRole('button', { name: 'Clear done' }))
+    expect(screen.getByText(/2 tasks removed/)).toBeInTheDocument()
+
+    // Removing one more strand both of the swept tasks.
+    await user.click(screen.getByRole('button', { name: 'Remove Still open' }))
+    expect(screen.getByText(/2 earlier tasks can no longer be undone/)).toBeInTheDocument()
+  })
+
+  it('adds up the loss across a run of removals', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    for (const t of ['A', 'B', 'C']) await addTask(user, t)
+
+    // Nothing is lost by the first removal.
+    await user.click(screen.getByRole('button', { name: 'Remove A' }))
+    expect(screen.queryByText(/no longer be undone/)).not.toBeInTheDocument()
+
+    // After three removals, A and B are both unrecoverable.
+    await user.click(screen.getByRole('button', { name: 'Remove B' }))
+    await user.click(screen.getByRole('button', { name: 'Remove C' }))
+    expect(screen.getByText(/2 earlier tasks can no longer be undone/)).toBeInTheDocument()
+  })
+
+  it('reports no loss on the first removal, as the app actually ships', async () => {
+    // The app is wrapped in StrictMode, which runs state updates twice. The
+    // offer must not mistake its own first pass for a displaced removal.
+    const user = userEvent.setup()
+    render(<StrictMode><App /></StrictMode>)
+    await user.type(input(), 'Only one{Enter}')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Only one' }))
+
+    expect(screen.getByText(/1 task removed/)).toBeInTheDocument()
+    expect(screen.queryByText(/no longer be undone/)).not.toBeInTheDocument()
+  })
+
+  it('counts a stranded sweep correctly as the app actually ships', async () => {
+    const user = userEvent.setup()
+    render(<StrictMode><App /></StrictMode>)
+    for (const t of ['D1', 'D2']) await addTask(user, t, true)
+    await addTask(user, 'Open one')
+
+    await user.click(screen.getByRole('button', { name: 'Clear done' }))
+    expect(screen.getByText(/2 tasks removed/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Remove Open one' }))
+    expect(screen.getByText(/2 earlier tasks can no longer be undone/)).toBeInTheDocument()
+  })
+
+  it('drops the loss once the offer has been used', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'First')
+    await addTask(user, 'Second')
+
+    await user.click(screen.getByRole('button', { name: 'Remove First' }))
+    await user.click(screen.getByRole('button', { name: 'Remove Second' }))
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    // The offer is spent, so it is reporting on nothing.
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/no longer be undone/)).not.toBeInTheDocument()
+  })
+
+  it('does not blame me for losing an earlier removal', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'First')
+    await addTask(user, 'Second')
+
+    await user.click(screen.getByRole('button', { name: 'Remove First' }))
+    await user.click(screen.getByRole('button', { name: 'Remove Second' }))
+
+    const text = screen.getByText(/no longer be undone/).textContent
+    expect(text.toLowerCase()).not.toMatch(/you|your|careful|warning|lost|error/)
+  })
+
+  it('is announced when it appears and again when it changes', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'First')
+    await addTask(user, 'Second')
+
+    await user.click(screen.getByRole('button', { name: 'Remove First' }))
+    const offer = screen.getByRole('status')
+    expect(offer).toBeInTheDocument()
+    expect(offer).toHaveTextContent('1 task removed')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Second' }))
+    // The same live region now reports the loss, so it is announced again.
+    expect(screen.getByRole('status')).toHaveTextContent(/no longer be undone/)
+  })
+
+  it('still clears itself, and the timer is unchanged', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      const user = userEvent.setup()
+      render(<App />)
+      await addTask(user, 'Buy milk')
+
+      await user.click(screen.getByRole('button', { name: 'Remove Buy milk' }))
+      expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+
+      // Still there well before it expires.
+      await act(async () => { vi.advanceTimersByTime(3000) })
+      expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+
+      // And gone once it has, with nothing asked of the person.
+      await act(async () => { vi.advanceTimersByTime(5000) })
+      expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('restarts the timer when the next removal replaces it', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      const user = userEvent.setup()
+      render(<App />)
+      await addTask(user, 'First')
+      await addTask(user, 'Second')
+
+      await user.click(screen.getByRole('button', { name: 'Remove First' }))
+      await act(async () => { vi.advanceTimersByTime(4000) })
+
+      // A second removal should give the new offer a full life, not the 1s that
+      // was left on the old one.
+      await user.click(screen.getByRole('button', { name: 'Remove Second' }))
+      await act(async () => { vi.advanceTimersByTime(3000) })
+      expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

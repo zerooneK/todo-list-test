@@ -67,6 +67,11 @@ export default function App() {
   // At most one removal is held at a time, so a second removal replaces the
   // first rather than stacking a second offer. A removal may be a single task
   // or a whole sweep, so it holds a list. Null means no offer is shown.
+  //
+  // `displaced` counts tasks an earlier removal was holding that this one has
+  // just made unrecoverable. The app still holds only one removal; it just
+  // stops pretending the loss did not happen, because a task that can no longer
+  // be undone is the same kind of quiet loss as the one the backup exists for.
   const [removal, setRemoval] = useState(null)
   // When a backup was last downloaded, and when the hint was last dismissed.
   // The hint is derived from these timestamps rather than counted, so an app
@@ -125,30 +130,43 @@ export default function App() {
     )
   }
 
-  function deleteTask(id) {
-    setTasks(prev => {
-      const index = prev.findIndex(t => t.id === id)
-      if (index === -1) return prev
+  // Hold a removal, and say how many tasks an earlier held removal just lost.
+  // Both single removals and the whole sweep come through here, so neither can
+  // quietly forget to report what it displaced.
+  //
+  // `displaced` is carried forward as a running total rather than derived from
+  // the removal being replaced. That matters: a state update inside another
+  // update is run twice under StrictMode, which is how the app ships, and the
+  // second pass would read the removal the first had just written and claim it
+  // had been lost. Nothing here is derived inside an updater, so the count is
+  // the same however many times React runs it.
+  function holdRemoval(removed) {
+    setRemoval(prev => ({
+      removed,
+      displaced: (prev?.displaced ?? 0) + (prev ? prev.removed.length : 0),
+    }))
+  }
 
-      // Hold the task and where it sat, so Undo puts it back exactly as it was.
-      setRemoval({ removed: [{ task: prev[index], index }] })
-      return prev.filter(t => t.id !== id)
-    })
+  function deleteTask(id) {
+    const index = tasks.findIndex(t => t.id === id)
+    if (index === -1) return
+
+    // Hold the task and where it sat, so Undo puts it back exactly as it was.
+    holdRemoval([{ task: tasks[index], index }])
+    setTasks(prev => prev.filter(t => t.id !== id))
   }
 
   function clearDone() {
-    setTasks(prev => {
-      // Hold every done task and where each one sat, so the whole sweep can
-      // be put back in one action. Open tasks are never touched.
-      const removed = []
-      prev.forEach((task, index) => {
-        if (task.completed) removed.push({ task, index })
-      })
-      if (removed.length === 0) return prev
-
-      setRemoval({ removed })
-      return prev.filter(t => !t.completed)
+    // Hold every done task and where each one sat, so the whole sweep can be
+    // put back in one action. Open tasks are never touched.
+    const removed = []
+    tasks.forEach((task, index) => {
+      if (task.completed) removed.push({ task, index })
     })
+    if (removed.length === 0) return
+
+    holdRemoval(removed)
+    setTasks(prev => prev.filter(t => !t.completed))
   }
 
   function undoRemoval() {

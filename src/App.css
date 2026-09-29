@@ -378,14 +378,28 @@ h1 {
 .undo-offer {
   display: flex;
   align-items: center;
+  /* The text can be a full sentence when a removal displaced an earlier one, so
+     it must wrap rather than push the Undo button off the edge of the card. */
+  flex-wrap: wrap;
   gap: var(--space-tight);
-  margin-top: var(--space);
   font-size: var(--font-size-label);
   color: var(--color-text-faint);
 }
 
+/* The region is always in the page, so that a screen reader announces it when
+   it fills. Empty, it must take up no space at all. */
+.undo-offer:empty {
+  display: none;
+}
+
+.undo-offer:not(:empty) {
+  margin-top: var(--space);
+}
+
 .undo-offer-text {
   letter-spacing: 0.04em;
+  /* Lets the sentence shrink below its own width so it can wrap. */
+  min-width: 0;
 }
 
 .undo-offer-btn {

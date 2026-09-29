@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### Fixed
+- The undo offer said only "Removed", which described none of the cases it
+  actually covered (GitHub issue #15). A sweep of fourteen read exactly like a
+  removal of one, and removing a second task silently ended the first one's undo
+  with no indication it had happened. That is the same kind of quiet loss the
+  backup system exists to prevent, sitting inside the app
+  - The offer now states what it is holding: "1 task removed", "3 tasks removed"
+  - When a removal displaces an earlier one, it says so plainly: "2 earlier
+    tasks can no longer be undone". Wording stays factual and does not scold
+  - The loss is counted as a running total, so three removals in a row report the
+    two tasks that are genuinely unrecoverable rather than the one that was most
+    recently replaced
+  - The one-removal-at-a-time rule and the five-second timer are unchanged
+  - The offer's live region is now always in the page, filling rather than
+    arriving. A region inserted together with its first words is commonly missed
+    by screen readers; this also means a second message is announced as a change
+    rather than a new arrival
+  - The offer wraps rather than pushing the Undo button off a narrow screen
+
 ### Added
 - A shared focus ring, so the app can be used without a mouse (GitHub issue
   #14). Every control signalled that it was pressable the same way — its colour

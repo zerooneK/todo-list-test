@@ -137,6 +137,15 @@ task, done task, view, clear done. The old "todo" wording is retired.
   the first rather than stacking a second offer
 - A held removal is a list, so one removal and the clear-done sweep share the
   same offer and the same restore
+- A held removal also carries `displaced`: how many tasks earlier removals were
+  holding that can no longer be undone, as a running total. The app holds one
+  removal only; it just stops pretending a loss did not happen
+- **Never set state from inside a state updater.** `holdRemoval` is called from
+  the event handler, not from within the `setTasks` updater. React runs an
+  updater more than once under StrictMode, which is how this app ships, and a
+  second pass would read the removal the first had just written and report it as
+  lost. There are checks that render the app the way `main.jsx` does, in
+  StrictMode, precisely to keep this honest
 - The removal is cleared by a short timeout (`UNDO_TIMEOUT_MS`), so the offer
   needs no dismissal; the timer is cleared on the next removal
 - Undo restores each task to its original position, done state included
