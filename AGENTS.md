@@ -59,9 +59,11 @@ task, done task, view, clear done. The old "todo" wording is retired.
 
 - `App.jsx` holds at most one removal at a time, so a second removal replaces
   the first rather than stacking a second offer
+- A held removal is a list, so one removal and the clear-done sweep share the
+  same offer and the same restore
 - The removal is cleared by a short timeout (`UNDO_TIMEOUT_MS`), so the offer
   needs no dismissal; the timer is cleared on the next removal
-- Undo restores the task and its original position, done state included
+- Undo restores each task to its original position, done state included
 - The offer is small and quiet, and deliberately does not animate
 
 ## Testing

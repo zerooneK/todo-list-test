@@ -3,8 +3,18 @@
 ## [Unreleased]
 
 ### Added
+- The clear-done sweep is now undoable (GitHub issue #7)
+  - The same brief Undo offer appears after the sweep as after a single removal
+  - One Undo brings back every swept task, each in its original place and still
+    marked as done
+  - Open tasks are untouched by both the sweep and its undo
+- The undo hold is now a list, so a single removal and a whole sweep share the
+  same offer and the same restore
+- The task checkbox now names the task it ticks, so it is clear what it controls
+- Checks for the sweep: it leaves open tasks alone, the offer appears, every
+  task comes back in order and still done, the offer expires, a sweep replaces
+  a single-removal offer rather than stacking, and the offer is spent after use
 - Undo for a single task removal (GitHub issue #6)
-  - Removing a task still happens straight away, with nothing to confirm
   - A small quiet "Removed — Undo" offer appears straight after, and clears
     itself after a few seconds
   - Undo puts the task back exactly as it was, in its original place and with

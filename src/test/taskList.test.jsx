@@ -196,6 +196,140 @@ describe('removing a task', () => {
   })
 })
 
+describe('clearing every done task', () => {
+  async function addTask(user, text, done = false) {
+    await user.type(screen.getByPlaceholderText('What needs doing?'), text)
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    if (done) await user.click(screen.getByRole('checkbox', { name: `Mark ${text} as done` }))
+  }
+
+  async function sweep(user) {
+    await user.click(screen.getByRole('button', { name: 'Clear done' }))
+  }
+
+  function shownTasks() {
+    return screen.getAllByRole('listitem').map(li => li.textContent)
+  }
+
+  it('sweeps away every done task and leaves the open ones', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Still to do')
+    await addTask(user, 'Finished one', true)
+    await addTask(user, 'Finished two', true)
+
+    await sweep(user)
+
+    const shown = shownTasks()
+    expect(shownTasks()).toHaveLength(1)
+    expect(shown[0]).toContain('Still to do')
+  })
+
+  it('offers Undo after the sweep, just as after one removal', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Finished one', true)
+
+    await sweep(user)
+
+    expect(screen.getByText('Removed')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+  })
+
+  it('brings every swept task back in one go', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Open one')
+    await addTask(user, 'Finished one', true)
+    await addTask(user, 'Open two')
+    await addTask(user, 'Finished two', true)
+
+    await sweep(user)
+    expect(shownTasks()).toHaveLength(2)
+
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    const shown = shownTasks()
+    expect(shown).toHaveLength(4)
+    expect(shown[0]).toContain('Open one')
+    expect(shown[1]).toContain('Finished one')
+    expect(shown[2]).toContain('Open two')
+    expect(shown[3]).toContain('Finished two')
+  })
+
+  it('brings the swept tasks back still marked as done', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Finished one', true)
+    await addTask(user, 'Finished two', true)
+
+    await sweep(user)
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    // Both are back and both are still ticked, not reset to open.
+    expect(screen.getByRole('checkbox', { name: 'Mark Finished one as done' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Finished two as done' })).toBeChecked()
+  })
+
+  it('leaves open tasks exactly as they were through the sweep and the undo', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Open one')
+    await addTask(user, 'Finished one', true)
+
+    await sweep(user)
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark Open one as done' })).not.toBeChecked()
+    expect(screen.getByText('1 open task')).toBeInTheDocument()
+  })
+
+  it('clears the sweep offer on its own, like any other', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Finished one', true)
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await sweep(user)
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000)
+    })
+
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
+
+  it('replaces a single removal offer with the sweep offer, not stacking', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'To remove one at a time')
+    await addTask(user, 'Finished one', true)
+
+    await user.click(screen.getByRole('button', { name: 'Remove To remove one at a time' }))
+    await sweep(user)
+
+    expect(screen.getAllByRole('button', { name: 'Undo' })).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+    // The sweep was undone, not the earlier single removal.
+    expect(screen.getByText('Finished one')).toBeInTheDocument()
+    expect(screen.queryByText('To remove one at a time')).not.toBeInTheDocument()
+  })
+
+  it('does not offer a second Undo once the sweep has been undone', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Finished one', true)
+    await sweep(user)
+
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+
+    // The offer is spent; the task is back and no further Undo remains.
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+    expect(screen.getByText('Finished one')).toBeInTheDocument()
+  })
+})
+
 describe('the theme', () => {
   beforeEach(() => {
     document.documentElement.removeAttribute('data-theme')

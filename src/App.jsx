@@ -40,7 +40,8 @@ export default function App() {
   const [currentView, setCurrentView] = useState('all')
   const [theme, setTheme] = useState(readTheme)
   // At most one removal is held at a time, so a second removal replaces the
-  // first rather than stacking a second offer. Null means no offer is shown.
+  // first rather than stacking a second offer. A removal may be a single task
+  // or a whole sweep, so it holds a list. Null means no offer is shown.
   const [removal, setRemoval] = useState(null)
 
   useEffect(() => {
@@ -82,8 +83,23 @@ export default function App() {
       if (index === -1) return prev
 
       // Hold the task and where it sat, so Undo puts it back exactly as it was.
-      setRemoval({ task: prev[index], index })
+      setRemoval({ removed: [{ task: prev[index], index }] })
       return prev.filter(t => t.id !== id)
+    })
+  }
+
+  function clearDone() {
+    setTasks(prev => {
+      // Hold every done task and where each one sat, so the whole sweep can
+      // be put back in one action. Open tasks are never touched.
+      const removed = []
+      prev.forEach((task, index) => {
+        if (task.completed) removed.push({ task, index })
+      })
+      if (removed.length === 0) return prev
+
+      setRemoval({ removed })
+      return prev.filter(t => !t.completed)
     })
   }
 
@@ -91,7 +107,11 @@ export default function App() {
     setTasks(prev => {
       if (!removal) return prev
       const restored = [...prev]
-      restored.splice(removal.index, 0, removal.task)
+      // Put each task back at the position it came from, in order, so the
+      // list reads exactly as it did before the removal.
+      for (const { task, index } of removal.removed) {
+        restored.splice(index, 0, task)
+      }
       return restored
     })
     // The offer is used up and never comes back.
@@ -102,10 +122,6 @@ export default function App() {
     setTasks(prev =>
       prev.map(t => t.id === id ? { ...t, text } : t)
     )
-  }
-
-  function clearDone() {
-    setTasks(prev => prev.filter(t => !t.completed))
   }
 
   return (

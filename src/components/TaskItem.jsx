@@ -27,6 +27,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
         type="checkbox"
         checked={task.completed}
         onChange={() => onToggle(task.id)}
+        aria-label={`Mark ${task.text} as done`}
       />
       {editing ? (
         <input
