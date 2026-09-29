@@ -27,6 +27,22 @@
     alert, and nothing moves or animates
 
 ### Changed
+- The clear-done offer is now not rendered when there is nothing to sweep,
+  instead of being rendered and hidden with a stylesheet. A hidden button is
+  still in the page, still focusable and still pressable for anyone the
+  stylesheet does not reach — a screen reader, or a browser the CSS has not
+  loaded for yet. Whether the offer exists is now a fact about the task list
+  rather than a styling detail
+- `verify-dist.mjs` and `verify-reload.mjs` no longer keep separate copies of
+  the same jsdom setup, React input plumbing and pass/fail reporting. They share
+  `verify-harness.mjs`, so the two checks cannot drift into driving the app
+  differently
+- The published-build checks no longer assert on CSS class names. They find
+  buttons and tasks the way a person does — by the name on them. This was the
+  last place the checks reached past the seam
+- A line of dead code in `verify-reload.mjs` that looked up the "Restore from a
+  backup" button and then discarded it is now a real check, so that button is
+  genuinely exercised
 - `storage.js` is tidied so its names say what they return. `readNumber` and
   `writeNumber` are now `readText` and `writeText`, because a stored value
   arrives as a string and deciding what it means is the caller's business

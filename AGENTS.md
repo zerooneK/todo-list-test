@@ -50,6 +50,10 @@ npm run verify:dist
 - `verify-reload.mjs` opens the built app twice against the same storage to
   prove tasks survive a page reload, and that a backup taken in the built app
   is restorable
+- `verify-harness.mjs` is the one way to drive the published app: it opens the
+  built page, stubs the browser, and reports pass or fail. Both scripts use it,
+  so the two cannot drift into checking the app differently. Nothing in any of
+  them asserts on a CSS class name; they find things by the name a person sees
 - The bundle served by Vercel was confirmed byte-identical (same sha256) to the
   one these checks drive, so what is verified is what is published
 
@@ -219,7 +223,11 @@ task, done task, view, clear done. The old "todo" wording is retired.
   the glossary term is **view** (CONTEXT.md lists "filter" under _Avoid_). Left
   alone to keep the change focused; worth a rename when something else in that
   area is touched
-- CSS class `.hidden` toggles visibility; `.completed` toggles strikethrough
+- CSS class `.completed` toggles strikethrough
+- The clear-done offer is not rendered at all when there is nothing to sweep,
+  rather than rendered and hidden. Whether the offer exists is a fact about the
+  task list, and a hidden button is still focusable and still pressable for
+  anyone the stylesheet does not reach
 
 ## Workflow
 

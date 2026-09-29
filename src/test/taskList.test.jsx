@@ -1316,3 +1316,36 @@ describe('coming back to a task list saved before the rename', () => {
     expect(screen.queryByText('An older task')).not.toBeInTheDocument()
   })
 })
+
+describe('the clear-done offer', () => {
+  it('is not offered at all when there is nothing to sweep', () => {
+    render(<App />)
+
+    // Not merely hidden — not offered, so there is nothing to focus or press.
+    expect(screen.queryByRole('button', { name: 'Clear done' })).not.toBeInTheDocument()
+  })
+
+  it('is not offered when only open tasks are present', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Still open{Enter}')
+
+    expect(screen.queryByRole('button', { name: 'Clear done' })).not.toBeInTheDocument()
+  })
+
+  it('appears once a task is done, and goes away again once swept', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Will be done{Enter}')
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Will stay open{Enter}')
+    expect(screen.queryByRole('Clear done', { name: 'checkbox' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Will be done as done' }))
+    expect(screen.getByRole('button', { name: 'Clear done' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Clear done' }))
+    expect(screen.queryByRole('button', { name: 'Clear done' })).not.toBeInTheDocument()
+  })
+})

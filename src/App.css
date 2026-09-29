@@ -212,10 +212,6 @@ h1 {
   color: var(--color-danger);
 }
 
-.hidden {
-  display: none !important;
-}
-
 /* The private-window notice: calm and factual, not an alarm */
 .private-warning {
   margin-top: var(--space-wide);
