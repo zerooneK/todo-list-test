@@ -3,6 +3,13 @@
 ## [Unreleased]
 
 ### Added
+- Test safety net (GitHub issue #2)
+  - `npm test` and `npm run test:watch` scripts
+  - Vitest with a jsdom browser-like environment
+  - Testing Library for driving the app as the person uses it
+  - First checks: typing a task shows it; ticking a task shows it as done
+- `css: true` and automatic JSX in the Vite config so tests resolve the real
+  component tree and stylesheet
 - Implementation tickets for the redesign published to GitHub as issues #2-#12
   (spec in #1), each tagged `ready-for-agent` and listing its own blockers
 - Triage labels created on the tracker: `needs-triage`, `needs-info`,

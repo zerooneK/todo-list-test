@@ -19,7 +19,19 @@ npm run build
 - `src/App.jsx` — root component: owns `todos` + `currentFilter` state, passes props down
 - `src/App.css` — all styling (Poppins font via `@import`)
 - `src/components/` — stateless components: TodoInput, Filters, TodoList, TodoItem, TodoFooter
+- `src/test/` — test setup plus the checks; see the testing seam note below
 - `src/main.jsx` — entry point (do not edit)
+
+## Testing
+
+- Run checks with `npm test` (add `--watch` via `npm run test:watch`)
+- **One seam: the app as the person uses it.** Tests render the app, drive it
+  with real typing and clicking, and assert only on what is visible.
+- Do not test internal helpers, component state, storage keys, or CSS class
+  names — those are implementation details that change without the person
+  noticing.
+- jsdom cannot resolve the stylesheet cascade, so assertions rely on visible
+  text, roles, and checked state rather than computed styles.
 
 ## State management
 
