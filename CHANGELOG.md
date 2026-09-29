@@ -3,6 +3,28 @@
 ## [Unreleased]
 
 ### Added
+- Renaming a task is now a visible pencil at the end of every row
+  (GitHub issue #13). It was a double-click on the text, which nothing on
+  screen advertised: no pointer, no hover, no label, and no keyboard route at
+  all. The owner had never once used the feature, because there was no way to
+  know it existed
+  - Because it is a real button rather than a decorated span, it is reachable
+    by keyboard and named out loud for assistive technology at no extra cost
+  - The double-click is removed rather than kept as a second, invisible route.
+    One obvious way to do a thing beats two where one is hidden
+  - The pencil steps aside while an edit is open, so a stray click cannot
+    commit or cancel the edit under the person's cursor
+
+### Changed
+- The remove control is now the loudest thing in a task row rather than the
+  faintest (GitHub issue #13). Each row carries two controls, so their visual
+  weight has to say which one destroys the task. The pencil rests in
+  `--color-text-faint` and darkens to `--color-text-quiet` on hover; the remove
+  control sits at `--color-text` and turns `--color-danger` on hover, so it
+  outweighs the pencil even with the pointer resting on the pencil. Everything
+  clears 3:1 against its background in either look. This weighting is a
+  stylesheet fact and is deliberately not asserted in the checks, which cannot
+  see colour
 - The app is published at **https://todo-app-react-zeta-nine.vercel.app**
   (GitHub issue #12). Deployed from `main` to Vercel, with the repository kept
   as the single source of the code

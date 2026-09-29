@@ -204,6 +204,19 @@ task, done task, view, clear done. The old "todo" wording is retired.
 - `asTaskList` runs on load, so ids are re-minted on each visit. Nothing refers
   to a task outside the task list, so this is invisible
 - Editing uses local `useState` in TaskItem — blur/Enter commits, Escape cancels
+- Renaming is a visible pencil button at the end of every row, not a
+  double-click on the text. A hidden gesture is invisible to everyone and
+  unreachable by keyboard; a real button is seen, tabbed to, and named out
+  loud for nothing extra. The pencil steps aside while an edit is open
+- Each row ends in two controls whose visual weight encodes consequence: the
+  pencil is the quiet one (`--color-text-faint`, `--color-text-quiet` on
+  hover), the remove control is the loud one (`--color-text`,
+  `--color-danger` on hover). The remove control outweighs the pencil even
+  with the pointer on the pencil, so the destructive action is never the
+  faintest or the quietest thing in the row
+- Two tasks may carry the same words, so a control named after a task's text is
+  not unique. Checks that need one of several matches reach it by position
+  within its row
 - An edit is deliberately transient: the in-progress text lives only in
   `TaskItem`'s local state and is never written to storage as it is typed, so
   reloading mid-edit leaves the saved words untouched

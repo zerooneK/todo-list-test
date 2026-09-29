@@ -176,13 +176,37 @@ h1 {
   outline: none;
 }
 
+/* Two controls sit at the end of every row, so their weight has to say which
+   one destroys the task. The pencil is the quiet one and the remove control is
+   the loud one, permanently — the destructive action is never the faintest
+   thing in the row. */
+.task-item .rename-btn,
 .task-item .delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
   background: none;
   border: none;
-  color: var(--color-text-faint);
-  font-size: 18px;
   line-height: 1;
   cursor: pointer;
+}
+
+.task-item .rename-btn {
+  padding: 4px;
+  color: var(--color-text-faint);
+}
+
+/* The pencil darkens on hover but never reaches the remove control's weight:
+   the one destructive control in the row is the one that stands out, whether
+   or not the pointer is anywhere near the other. */
+.task-item .rename-btn:hover {
+  color: var(--color-text-quiet);
+}
+
+.task-item .delete-btn {
+  color: var(--color-text);
+  font-size: 18px;
   padding: 2px 6px;
 }
 

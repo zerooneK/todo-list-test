@@ -43,12 +43,31 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
           }}
         />
       ) : (
-        <span
-          className={'task-text' + (task.completed ? ' completed' : '')}
-          onDoubleClick={() => { setEditText(task.text); setEditing(true) }}
-        >
+        <span className={'task-text' + (task.completed ? ' completed' : '')}>
           {task.text}
         </span>
+      )}
+      {/* Renaming is a real button rather than a hidden double-click on the
+          text, so it can be seen, reached by keyboard, and named out loud.
+          While an edit is open it steps aside: the field is the only thing
+          to aim at, and a stray click on the pencil would commit or cancel
+          the edit under the person's cursor. */}
+      {!editing && (
+        <button
+          className="rename-btn"
+          onClick={() => { setEditText(task.text); setEditing(true) }}
+          aria-label={`Rename ${task.text}`}
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+            <path
+              d="M11.1 1.6l3.3 3.3-8.4 8.4-4.1.8.8-4.1 8.4-8.4z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       )}
       <button
         className="delete-btn"

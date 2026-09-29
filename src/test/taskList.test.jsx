@@ -1,8 +1,24 @@
 import React from 'react'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
+
+// The empty add-task input, wherever a test needs it.
+const input = () => screen.getByPlaceholderText('What needs doing?')
+
+// Walk the keyboard forward until `isTarget()` names the element that has
+// focus, and say whether it was reached. A control that can only be reached by
+// calling focus() on it is not reachable, so the walking is the point.
+async function tabUntil(user, isTarget, maxSteps = 40) {
+  for (let i = 0; i < maxSteps; i++) {
+    await user.tab()
+    // isTarget receives the focused element and answers without throwing, so a
+    // miss is a plain `false` rather than an exception mid-walk.
+    if (isTarget(document.activeElement)) return true
+  }
+  return false
+}
 
 // Pretend the person's device is set to light or dark, so the app's
 // "follow the device" behaviour can be exercised.
@@ -612,7 +628,7 @@ describe('task identity', () => {
     render(<App />)
     await restoreFile(user, duplicateIdBackup())
 
-    await user.dblClick(screen.getByText('First restored'))
+    await user.click(screen.getByRole('button', { name: 'Rename First restored' }))
     await user.clear(screen.getByLabelText('Edit First restored'))
     await user.type(screen.getByLabelText('Edit First restored'), 'Renamed{Enter}')
 
@@ -823,7 +839,6 @@ describe('the private window warning', () => {
 })
 
 describe('fast task entry and safe editing', () => {
-  const input = () => screen.getByPlaceholderText('What needs doing?')
 
   it('keeps the input ready after Enter, with no click back', async () => {
     const user = userEvent.setup()
@@ -912,7 +927,7 @@ describe('fast task entry and safe editing', () => {
     render(<App />)
     await user.type(input(), 'Call the dentist{Enter}')
 
-    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.click(screen.getByRole('button', { name: 'Rename Call the dentist' }))
     await user.clear(screen.getByLabelText('Edit Call the dentist'))
     await user.type(screen.getByLabelText('Edit Call the dentist'), 'Call the clinic{Enter}')
 
@@ -925,7 +940,7 @@ describe('fast task entry and safe editing', () => {
     render(<App />)
     await user.type(input(), 'Call the dentist{Enter}')
 
-    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.click(screen.getByRole('button', { name: 'Rename Call the dentist' }))
     await user.clear(screen.getByLabelText('Edit Call the dentist'))
     await user.type(screen.getByLabelText('Edit Call the dentist'), 'Something else')
     await user.keyboard('{Escape}')
@@ -940,7 +955,7 @@ describe('fast task entry and safe editing', () => {
     await user.type(input(), 'Call the dentist{Enter}')
 
     // Start an edit and type a half-finished value.
-    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.click(screen.getByRole('button', { name: 'Rename Call the dentist' }))
     await user.clear(screen.getByLabelText('Edit Call the dentist'))
     await user.type(screen.getByLabelText('Edit Call the dentist'), 'Half typed wo')
 
@@ -956,7 +971,7 @@ describe('fast task entry and safe editing', () => {
     const user = userEvent.setup()
     render(<App />)
     await user.type(input(), 'Call the dentist{Enter}')
-    await user.dblClick(screen.getByText('Call the dentist'))
+    await user.click(screen.getByRole('button', { name: 'Rename Call the dentist' }))
     await user.clear(screen.getByLabelText('Edit Call the dentist'))
     await user.type(screen.getByLabelText('Edit Call the dentist'), 'Half typed wo')
 
@@ -1347,5 +1362,156 @@ describe('the clear-done offer', () => {
 
     await user.click(screen.getByRole('button', { name: 'Clear done' }))
     expect(screen.queryByRole('button', { name: 'Clear done' })).not.toBeInTheDocument()
+  })
+})
+
+describe('renaming a task', () => {
+  // Renaming used to need a double-click on the text, which nothing on screen
+  // advertised. These check the route a person can actually see.
+  const pencil = text => screen.getByRole('button', { name: `Rename ${text}` })
+  // Non-throwing, for walking the tab order.
+  const isRename = el => el?.getAttribute('aria-label') === 'Rename Call the dentist'
+
+  // Open the rename field for a task and type new words into it, without
+  // committing. The tests below differ in how they get here, not in the typing.
+  async function startRename(user, from, typed) {
+    await user.click(pencil(from))
+    await user.clear(screen.getByLabelText(`Edit ${from}`))
+    await user.type(screen.getByLabelText(`Edit ${from}`), typed)
+  }
+
+  it('offers a rename control on every task', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+    await user.type(input(), 'Water the plants{Enter}')
+
+    // Present in the page, not revealed by hovering: the app never reads the
+    // pointer, so a control that is in the document is one you can see.
+    expect(pencil('Call the dentist')).toBeInTheDocument()
+    expect(pencil('Water the plants')).toBeInTheDocument()
+  })
+
+  it('saves the new words when I rename with the pencil', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    await startRename(user, 'Call the dentist', 'Call the clinic{Enter}')
+
+    expect(screen.getByText('Call the clinic')).toBeInTheDocument()
+    expect(screen.queryByText('Call the dentist')).not.toBeInTheDocument()
+  })
+
+  it('renames with the keyboard alone', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    // Tab to the control the way a person would, rather than jumping to it.
+    // Asking where focus lands is the only honest way to show the control is
+    // actually reachable, not merely focusable in principle.
+    expect(await tabUntil(user, isRename)).toBe(true)
+
+    await startRename(user, 'Call the dentist', 'Call the clinic{Enter}')
+
+    expect(screen.getByText('Call the clinic')).toBeInTheDocument()
+  })
+
+  it('can be tabbed past in both directions and still be reached', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    // Walking forward reaches it, and so does walking back from the control
+    // after it, which is what proves it sits in the order rather than beside it.
+    expect(await tabUntil(user, isRename)).toBe(true)
+    await user.keyboard('{Tab}')
+    expect(document.activeElement).not.toBe(pencil('Call the dentist'))
+    await user.tab({ shift: true })
+    expect(document.activeElement).toBe(pencil('Call the dentist'))
+  })
+
+  it('no longer renames on double-click', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    // The old hidden route is gone: the text is plain text, not a target.
+    await user.dblClick(screen.getByText('Call the dentist'))
+
+    expect(screen.queryByLabelText('Edit Call the dentist')).not.toBeInTheDocument()
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+  })
+
+  it('leaves the words unchanged when I back out of a rename', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    await startRename(user, 'Call the dentist', 'Something else')
+    await user.keyboard('{Escape}')
+
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+    expect(screen.queryByText('Something else')).not.toBeInTheDocument()
+  })
+
+  it('saves the new words when I click away instead of pressing Enter', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    await startRename(user, 'Call the dentist', 'Call the clinic')
+    await user.click(input())
+
+    expect(screen.getByText('Call the clinic')).toBeInTheDocument()
+  })
+
+  it('removes the task if I clear the words while renaming', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+
+    await user.click(pencil('Call the dentist'))
+    await user.clear(screen.getByLabelText('Edit Call the dentist'))
+    await user.keyboard('{Enter}')
+
+    expect(screen.queryByText('Call the dentist')).not.toBeInTheDocument()
+  })
+
+  it('keeps each task addressable by its own name when several are listed', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(input(), 'Call the dentist{Enter}')
+    await user.type(input(), 'Water the plants{Enter}')
+
+    await startRename(user, 'Water the plants', 'Water the herbs{Enter}')
+
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+    expect(screen.getByText('Water the herbs')).toBeInTheDocument()
+  })
+})
+
+describe('two tasks with the same words', () => {
+  // The app allows the same text twice, so the controls that name a task by
+  // its words are not unique. Renaming has to still work on the right one.
+  it('renames the task I chose, not the other one with the same words', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Call the dentist{Enter}')
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Call the dentist{Enter}')
+
+    // Two controls share a name, so reach the second by its position in the list.
+    const rows = screen.getAllByRole('listitem')
+    const second = rows[1]
+    await user.click(within(second).getByRole('button', { name: 'Rename Call the dentist' }))
+    await user.clear(screen.getByLabelText('Edit Call the dentist'))
+    await user.type(screen.getByLabelText('Edit Call the dentist'), 'Call the clinic{Enter}')
+
+    // Only the one I chose changed; its twin kept the original words.
+    expect(screen.getByText('Call the clinic')).toBeInTheDocument()
+    expect(screen.getByText('Call the dentist')).toBeInTheDocument()
+    expect(rows[0]).toHaveTextContent('Call the dentist')
+    expect(rows[1]).toHaveTextContent('Call the clinic')
   })
 })
