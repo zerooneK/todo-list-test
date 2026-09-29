@@ -66,6 +66,19 @@ task, done task, view, clear done. The old "todo" wording is retired.
 - Undo restores each task to its original position, done state included
 - The offer is small and quiet, and deliberately does not animate
 
+## Backup and restore
+
+- `BackupControls` owns the download and the restore; `App.jsx` just supplies
+  the current list and a `restoreTasks` callback
+- The backup file is indented JSON: `app`, `version`, `exported`, `tasks`
+- The file is named `tasks-YYYY-MM-DD.json`, so backups sort and can be told
+  apart by date
+- A restore never happens on its own. Choosing a file only reads it and states
+  the consequence in words; the list is replaced only when the person confirms
+- A file that cannot be parsed, or whose tasks are not `{ id, text, completed }`,
+  is refused with a message and nothing is changed
+- The file input is reset after each choice, so the same file can be re-picked
+
 ## Testing
 
 - Run checks with `npm test` (add `--watch` via `npm run test:watch`)

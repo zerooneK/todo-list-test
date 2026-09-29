@@ -5,6 +5,7 @@ import TaskList from './components/TaskList'
 import TaskFooter from './components/TaskFooter'
 import ThemeToggle from './components/ThemeToggle'
 import UndoOffer from './components/UndoOffer'
+import BackupControls from './components/BackupControls'
 import './App.css'
 
 // The task list is saved under the newer name. The older name is still read
@@ -124,6 +125,17 @@ export default function App() {
     )
   }
 
+  // The weekly backup hint is a later ticket; the download is recorded now so
+  // the wiring is in one place.
+  function recordBackup() {}
+
+  function restoreTasks(restored) {
+    setTasks(restored)
+    // A restore is a deliberate replacement, not a removal, so no Undo is
+    // offered for it. The person was told the consequence first.
+    setRemoval(null)
+  }
+
   return (
     <div className="container">
       <div className="top-row">
@@ -140,6 +152,11 @@ export default function App() {
         onEdit={editTask}
       />
       <TaskFooter tasks={tasks} onClearDone={clearDone} />
+      <BackupControls
+        tasks={tasks}
+        onRestore={restoreTasks}
+        onDownloaded={recordBackup}
+      />
       <UndoOffer removal={removal} onUndo={undoRemoval} />
     </div>
   )

@@ -3,6 +3,23 @@
 ## [Unreleased]
 
 ### Added
+- Download and restore a backup (GitHub issue #8) — the real safety net for
+  tasks held in the browser
+  - "Download my tasks" saves the whole list to the computer as a dated file,
+    `tasks-YYYY-MM-DD.json`
+  - The file is indented JSON holding the words themselves, readable in any
+    text editor long after the app is gone
+  - "Restore from a backup" reads such a file back, and the whole list comes
+    back with each task still marked done as it was
+  - Restoring **never happens silently**: it first states plainly that it will
+    replace the current list and that the current list cannot be recovered,
+    and the person must confirm
+  - Saying no keeps the current list untouched
+  - A file that is unreadable, or is not a task backup, is refused with a
+    clear message and changes nothing
+  - Neither downloading nor restoring disturbs the current view or theme
+- Checks for backup and restore, including a full round trip: download the
+  list, empty it, and restore it back with done states intact
 - The clear-done sweep is now undoable (GitHub issue #7)
   - The same brief Undo offer appears after the sweep as after a single removal
   - One Undo brings back every swept task, each in its original place and still

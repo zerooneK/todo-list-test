@@ -330,6 +330,233 @@ describe('clearing every done task', () => {
   })
 })
 
+describe('backing up and restoring', () => {
+  // Capture what the download would have written, without touching a real disk.
+  let captured
+  let originalCreate
+
+  beforeEach(() => {
+    captured = { blobs: [], name: null }
+    originalCreate = URL.createObjectURL
+    URL.createObjectURL = vi.fn(blob => {
+      captured.blobs.push(blob)
+      return 'blob:mock'
+    })
+    URL.revokeObjectURL = vi.fn()
+    // Record the file name the app asks the browser to use.
+    const realClick = HTMLAnchorElement.prototype.click
+    HTMLAnchorElement.prototype.click = function patched() {
+      if (this.download) captured.name = this.download
+      else realClick.call(this)
+    }
+  })
+
+  afterEach(() => {
+    URL.createObjectURL = originalCreate
+  })
+
+  async function addTask(user, text, done = false) {
+    await user.type(screen.getByPlaceholderText('What needs doing?'), text)
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    if (done) await user.click(screen.getByRole('checkbox', { name: `Mark ${text} as done` }))
+  }
+
+  async function downloadBackup(user) {
+    await user.click(screen.getByRole('button', { name: 'Download my tasks' }))
+    return captured.blobs[captured.blobs.length - 1].text()
+  }
+
+  function backupFile(contents, name = 'tasks-2026-01-01.json') {
+    return new File([contents], name, { type: 'application/json' })
+  }
+
+  function backupWith(tasks) {
+    return backupFile(JSON.stringify({ app: 'tasks', version: 1, tasks }))
+  }
+
+  it('saves my whole task list to the computer', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Call the dentist')
+    await addTask(user, 'Water the plants', true)
+
+    const contents = await downloadBackup(user)
+
+    expect(captured.blobs).toHaveLength(1)
+    expect(contents).toContain('Call the dentist')
+    expect(contents).toContain('Water the plants')
+  })
+
+  it('names the file with today\u2019s date so backups can be told apart', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Anything')
+
+    await downloadBackup(user)
+
+    const now = new Date()
+    const expected = `tasks-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.json`
+    expect(captured.name).toBe(expected)
+  })
+
+  it('writes the backup in a plain, readable form', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Call the dentist')
+
+    const contents = await downloadBackup(user)
+
+    // Indented, with the words in it, not a single unreadable line.
+    expect(contents).toContain('"tasks"')
+    expect(contents).toContain('"text": "Call the dentist"')
+    expect(contents).toContain('"completed": false')
+  })
+
+  it('restores a downloaded backup, once I say so', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Something current')
+
+    await user.upload(screen.getByLabelText('Choose a backup file'), backupWith([
+      { id: 1, text: 'Recovered one', completed: false },
+      { id: 2, text: 'Recovered two', completed: true },
+    ]))
+    await user.click(screen.getByRole('button', { name: 'Replace my list' }))
+
+    expect(screen.getByText('Recovered one')).toBeInTheDocument()
+    expect(screen.getByText('Recovered two')).toBeInTheDocument()
+    expect(screen.queryByText('Something current')).not.toBeInTheDocument()
+  })
+
+  it('tells me plainly what will happen before I lose anything', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Something current')
+    await addTask(user, 'Another current')
+
+    await user.upload(
+      screen.getByLabelText('Choose a backup file'),
+      backupWith([{ id: 1, text: 'Recovered one', completed: false }])
+    )
+
+    // The consequence is stated in words, and nothing is gone yet.
+    const statement = screen.getByRole('alertdialog')
+    expect(statement).toHaveTextContent('replaces your current list of 2 tasks with 1')
+    expect(statement).toHaveTextContent('cannot be recovered')
+    expect(screen.getByText('Something current')).toBeInTheDocument()
+  })
+
+  it('keeps my current list if I say no', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Something current')
+
+    await user.upload(
+      screen.getByLabelText('Choose a backup file'),
+      backupWith([{ id: 1, text: 'Recovered one', completed: false }])
+    )
+    await user.click(screen.getByRole('button', { name: 'Keep my current list' }))
+
+    expect(screen.getByText('Something current')).toBeInTheDocument()
+    expect(screen.queryByText('Recovered one')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
+  it('brings back done tasks still marked as done', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.upload(
+      screen.getByLabelText('Choose a backup file'),
+      backupWith([{ id: 1, text: 'Already done', completed: true }])
+    )
+    await user.click(screen.getByRole('button', { name: 'Replace my list' }))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark Already done as done' })).toBeChecked()
+  })
+
+  it('round trips: what I download, I can restore', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Kept one')
+    await addTask(user, 'Kept two', true)
+
+    const contents = await downloadBackup(user)
+
+    // Wipe the list, as clearing browser data would.
+    await user.click(screen.getByRole('button', { name: 'Remove Kept one' }))
+    await user.click(screen.getByRole('button', { name: 'Remove Kept two' }))
+    expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+
+    await user.upload(screen.getByLabelText('Choose a backup file'), backupFile(contents))
+    await user.click(screen.getByRole('button', { name: 'Replace my list' }))
+
+    expect(screen.getByText('Kept one')).toBeInTheDocument()
+    expect(screen.getByText('Kept two')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Mark Kept two as done' })).toBeChecked()
+  })
+
+  it('refuses a file it cannot read, and changes nothing', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Something current')
+
+    await user.upload(
+      screen.getByLabelText('Choose a backup file'),
+      backupFile('this is not a backup {{{')
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('could not be read')
+    expect(screen.getByText('Something current')).toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
+  it('refuses a file that is not a task backup, and changes nothing', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Something current')
+
+    await user.upload(
+      screen.getByLabelText('Choose a backup file'),
+      backupFile(JSON.stringify({ notes: 'shopping list' }))
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('not a task backup')
+    expect(screen.getByText('Something current')).toBeInTheDocument()
+  })
+
+  it('refuses a file whose tasks are the wrong shape', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Something current')
+
+    await user.upload(
+      screen.getByLabelText('Choose a backup file'),
+      backupWith([{ text: 'No done flag' }])
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('not a task backup')
+    expect(screen.getByText('Something current')).toBeInTheDocument()
+  })
+
+  it('leaves my view and theme undisturbed', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await addTask(user, 'Kept one', true)
+    await user.click(screen.getByRole('button', { name: /look$/ }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+
+    await user.upload(
+      screen.getByLabelText('Choose a backup file'),
+      backupWith([{ id: 1, text: 'Recovered', completed: true }])
+    )
+    await user.click(screen.getByRole('button', { name: 'Replace my list' }))
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+    expect(screen.getByText('Recovered')).toBeInTheDocument()
+  })
+})
+
 describe('the theme', () => {
   beforeEach(() => {
     document.documentElement.removeAttribute('data-theme')
