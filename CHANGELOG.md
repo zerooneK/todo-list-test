@@ -2,6 +2,36 @@
 
 ## [Unreleased]
 
+### Changed
+- The look was calm to the point of being faint, which is not the same thing.
+  Measured, rather than eyeballed: 13 of the 19 font sizes were the same 13px
+  — the title included — so nothing led the eye, and the card and its row
+  dividers sat at 1.04:1 and 1.18:1, below the threshold of perceptible, so
+  the card had no edge and the rows had no separation. Every rule below keeps
+  the calm look: still no gradients, no shadows, no motion
+  - **Warm paper instead of cold grey.** Every neutral carries the same warm
+    hue, so the greys read as paper rather than as a form
+  - **Contrast chosen, not guessed.** Text 11.95:1, quiet 5.95:1, faint 4.57:1
+    against the card, all passing AA; dividers brought up to 1.43:1, faint but
+    visible; the card now reads as a card
+  - **A real type scale**, four steps with a clear jump. The title went from
+    13px — the same size as a label — to 24px, in the serif face, so the page
+    has a subject
+  - The interface stays a sans; only the title is a serif. A book sets its
+    title in one voice and its body in another, and that split is what makes
+    this read as a page rather than as a form
+  - One warm clay accent, reserved for the thing being acted on or the state
+    you are in. It previously meant four unrelated things
+  - `--color-accent` is the one colour that survived; `danger` is warmed to
+    match, and both look at the focus ring and pass 3:1 comfortably
+
+### Fixed
+- The app fetched Poppins from Google's CDN with an `@import`, so every visit
+  made a request to a third party. `AGENTS.md` claimed that "only the app's own
+  assets are served", which was not true while that line was there. Typefaces
+  now come from the device: no third-party request, nothing to fail offline,
+  and the first paint is never a font swap
+
 ### Fixed
 - The overdue-backup reminder appeared on the page and nothing else
   (GitHub issue #16). It had no live region, so it only reached whoever

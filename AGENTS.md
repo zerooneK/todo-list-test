@@ -66,8 +66,9 @@ npm run verify:dist
 - `src/App.jsx` — root component: owns `tasks` + `currentView` state, passes props down
 - `src/index.css` — shared design values (colours, spacing, type) as CSS
   variables; the single source of truth for both looks
-- `src/App.css` — all styling, reading the shared values (Poppins font via
-  `@import`)
+- `src/App.css` — all styling, reading the shared values. No `@import`: the
+  typefaces come from the device, so the app makes no request to a font service
+  and shows its real look on the first paint
 - `src/components/` — stateless components: TaskInput, Filters, TaskList, TaskItem, TaskFooter
 - `src/test/` — test setup plus the checks; see the testing seam note below
 - `src/main.jsx` — entry point (do not edit)
@@ -93,6 +94,33 @@ task, done task, view, clear done. The old "todo" wording is retired.
 - Colours and spacing live as CSS variables in `src/index.css`; the dark
   version overrides the same names rather than adding new ones
 - The empty list shows one short calm line
+
+### Calm is not the same as faint
+
+- Calm means **legible and easy**, not small, quiet, or withheld. The look was
+  once so muted that the title was 13px — the same size as every label — and
+  the card and its dividers were at 1.04:1 and 1.18:1, below the threshold of
+  perceptible. Nothing led the eye and the page read as unfinished
+- The palette is **warm paper**, not cold grey: every neutral carries the same
+  warm hue, so the greys read as paper rather than as a form
+- Contrast is chosen, not guessed. Against `--color-surface`, text is 11.95:1,
+  quiet 5.95:1 and faint 4.57:1 in the light look, all passing AA; `--color-line`
+  sits near 1.43:1 — faint enough to stay quiet, visible enough that rows
+  separate, and the card reads as a card against `--color-page`. Changing a
+  colour means re-checking these, not picking one that looks nice
+- There is a real **type scale**, four steps with a clear jump between them
+  (`--font-size-title` 24, body 16, quiet 14, label 13). The title is the one
+  place the app says what it is, so it is the only place that gets real weight
+- The title is set in a **serif** and the interface is not. A book sets its
+  title in one voice and its body in another; the split is what makes this
+  read as a page rather than as a form. This is deliberate, not a stray font
+- `--color-accent` is one warm clay, reserved for the thing being acted on or
+  the state you are in: the focus ring, the current view, a checked box, an
+  edit in progress. If it starts meaning something else, it stops meaning
+  anything
+- Typefaces come from the device (`--font-title`, `--font-body`). Nothing is
+  fetched from a font service, so the app is honest when it says only its own
+  assets are served, and the first paint is never a font swap
 
 ## Theme
 

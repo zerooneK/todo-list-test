@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap');
+/*
+ * No `@import` here on purpose. The typefaces come from the device, so the app
+ * makes no request to a font service and shows its real look on the first
+ * paint. See the typeface note in src/index.css.
+ */
 
 * {
   margin: 0;
@@ -8,7 +12,7 @@
 }
 
 body {
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   background: var(--color-page);
   color: var(--color-text);
   display: flex;
@@ -55,14 +59,17 @@ body {
   outline-offset: 2px;
 }
 
-/* A small quiet label, not a decorative heading */
+/* The title. It was 13px — the same size as every label on the page, so
+   nothing led the eye and the whole thing read as flat. It is the one place
+   the app says what it is, so it is the one place that gets real weight.
+   Still quiet: the text colour, not black, and no decoration. */
 h1 {
   text-align: left;
-  color: var(--color-text-quiet);
-  font-size: var(--font-size-label);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: lowercase;
+  color: var(--color-text);
+  font-family: var(--font-title);
+  font-size: var(--font-size-title);
+  font-weight: 400;
+  letter-spacing: 0;
   margin-bottom: 0;
 }
 
@@ -174,6 +181,9 @@ h1 {
   flex: 1;
   min-width: 0;
   font-size: var(--font-size-body);
+  /* A long task wraps, and a wrapped line needs leading to stay a sentence
+     rather than a block. */
+  line-height: 1.5;
   color: var(--color-text);
 }
 
