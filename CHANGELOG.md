@@ -26,6 +26,14 @@
     match, and both look at the focus ring and pass 3:1 comfortably
 
 ### Fixed
+- `index.html` has pointed at `/favicon.svg` since the beginning, but the file
+  was never created, so every page load on the published site asked for
+  something that was not there: a 404 and a console error on every visit, and a
+  blank tab icon. Found by driving the published URL and watching every
+  response. The icon is now a filled clay rounded square with a paper check,
+  legible at 16px, so the tab reads as the app rather than as a blank page
+
+### Fixed
 - `AGENTS.md` and the focus-ring comment in `App.css` both claimed the ring was
   "keyboard-only, so a mouse user never sees it". That was never true, in two
   ways: the add-task input is focused on load, and a text field matches

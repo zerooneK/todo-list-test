@@ -1,0 +1,21 @@
+<!--
+  The tab icon. index.html has pointed at /favicon.svg since the beginning, but
+  the file was never created, so every page load asked for something that was
+  not there and logged a 404.
+
+  A filled clay rounded square with a paper check, so it still reads at 16px in
+  a busy tab strip. It is a single fixed mark on purpose: it does not follow the
+  light or dark look. Matching the device's chrome would mean deciding light
+  versus dark in a fourth place, and the clay reads on both.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="tasks">
+  <rect width="32" height="32" rx="7" fill="#9a6a3f" />
+  <path
+    d="M9 16.6l4.2 4.2L23 11.4"
+    fill="none"
+    stroke="#fffdf9"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

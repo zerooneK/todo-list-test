@@ -72,6 +72,9 @@ npm run verify:dist
 - `src/components/` — stateless components: TaskInput, Filters, TaskList, TaskItem, TaskFooter
 - `src/test/` — test setup plus the checks; see the testing seam note below
 - `src/main.jsx` — entry point (do not edit)
+- `public/favicon.svg` — the tab icon `index.html` has always pointed at. Vite
+  copies `public/` to the built site as-is. It was referenced from the start but
+  never created, so every page load asked for a file that was not there
 
 ## Saved data
 
