@@ -89,6 +89,11 @@ every push to `main`, on every pull request, and once a week.
   to an npm script: it has no entry point and running it alone does nothing.
   Grepping for the filename to decide whether it is wired in gives the wrong
   answer, which is how it was mistaken for orphaned once already
+- A GitHub billing lock stops every job before it starts, with "The job was not
+  started because your account is locked due to a billing issue". That is an
+  account problem rather than a code one, and on the run page it looks like a
+  failure. Check the account's billing before looking for a fault in the
+  workflow
 
 
 ## Run dev server
