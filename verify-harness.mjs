@@ -32,6 +32,18 @@ export function readBuild() {
 
 // Open the built app in jsdom. Each call is a separate page load, so
 // `storage` is how a caller carries one browser across two visits.
+//
+// The stylesheet is deliberately not injected here, even though readBuild
+// returns it. It was measured rather than assumed: inject it and jsdom parses
+// the sheet and reports no errors, but a computed style then comes back as the
+// literal text `var(--font-size-title)` — not a length, and not the browser
+// default it replaced, so it is assertable as neither. The sheet is also not
+// read here because a selector jsdom cannot parse would surface as an error and
+// fail the "no console errors" check for a reason that is not the app's fault.
+//
+// So: do not assert on computed styles through this function. Read the built
+// CSS, the way checkFocusRing does. What a person can see is checked by
+// text, role and checked state, which is what the app checks rely on anyway.
 export async function openApp({ html, code }, { storage, deviceDark = false } = {}) {
   const virtualConsole = new VirtualConsole()
   const errors = []

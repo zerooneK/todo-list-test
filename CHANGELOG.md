@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Added
+- The checks now run on their own, in `.github/workflows/checks.yml`: on every
+  push to `main`, on every pull request, and once a week. They previously ran
+  only when someone remembered, and the cost of that was concrete — a missing
+  tab icon sat unnoticed since the first commit, and a deploy went stale with
+  nothing to say so. The weekly run is the one that earns its keep over time:
+  the app depends on React, Vite and jsdom through a lockfile, and something
+  upstream can move while the code sits untouched. Nothing in a run reaches the
+  network, so it cannot fail because the published site is having a bad day
+- A README that describes this project rather than the Vite template it started
+  from, with the check badge at the top. The repo is public, so that badge is
+  the first evidence a visitor sees that any of this is verified
+- The Node version is pinned in `.nvmrc`, and `engines` states the same floor.
+  It is `>=22.22.2`, which is measured rather than chosen: vite allows Node
+  20.19, vitest allows 22, and **jsdom 30 requires 22.22.2**, so jsdom is what
+  sets it. The development machine is on exactly that version
+
+
 ### Changed
 - The look was calm to the point of being faint, which is not the same thing.
   Measured, rather than eyeballed: 13 of the 19 font sizes were the same 13px

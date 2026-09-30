@@ -59,6 +59,38 @@ npm run verify:dist
 - The bundle served by Vercel was confirmed byte-identical (same sha256) to the
   one these checks drive, so what is verified is what is published
 
+## Checks in CI
+
+`.github/workflows/checks.yml` runs lint, the app checks and `verify:dist` on
+every push to `main`, on every pull request, and once a week.
+
+- Every one of those checks already existed. They ran only when someone
+  remembered, and the cost was concrete: a missing tab icon sat unnoticed since
+  the first commit, and a deploy went stale with nothing to say so. A check
+  that does not run on its own is a check that will eventually be wrong without
+  anyone knowing
+- The weekly run is the one that earns its keep over time: the app depends on
+  React, Vite and jsdom through a lockfile, and something upstream can move
+  while the code sits untouched
+- Nothing in a run reaches the network. The harness passes the published URL to
+  jsdom as the page's `url`, which sets the origin for storage; it is not a
+  request. So a run cannot fail because the published site is having a bad day
+- Node is pinned in `.nvmrc`, and `engines` states the same floor. It is
+  22.22.2 because jsdom 30 requires it — vite allows 20.19 and vitest 22, so
+  jsdom is what sets it
+- `npm ci`, not `npm install`: it installs exactly what the lockfile pins, and
+  fails if package.json and the lockfile disagree, which `install` quietly
+  tidies over
+- CI reports; it does not block. Branch protection would stop direct pushes to
+  `main`, which is friction with no safety gain for a project one person pushes
+  to
+- **`verify-theme.mjs` is a library, not a script.** `verify-dist.mjs` imports
+  it, so its checks are already inside the production-bundle run. Do not add it
+  to an npm script: it has no entry point and running it alone does nothing.
+  Grepping for the filename to decide whether it is wired in gives the wrong
+  answer, which is how it was mistaken for orphaned once already
+
+
 ## Run dev server
 
 ## Structure

@@ -1,3 +1,17 @@
+# tasks
+
+A calm, personal task list. Live at **https://todo-app-react-zeta-nine.vercel.app**
+
+[![checks](https://github.com/zerooneK/todo-list-test/actions/workflows/checks.yml/badge.svg)](https://github.com/zerooneK/todo-list-test/actions/workflows/checks.yml)
+
+Tasks live in the browser, on one device. Use an ordinary window rather than a
+private one, and download a backup from the app now and then: that file is the
+only copy you can restore from.
+
+---
+
+The notes below are left over from the Vite template this project started from.
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.

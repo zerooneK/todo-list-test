@@ -1,0 +1,61 @@
+name: checks
+
+# The checks in this project were already thorough; they only ran when someone
+# remembered to run them. A stale deploy and a missing tab icon both sat
+# unnoticed because of that. This runs them instead.
+#
+# The weekly run is the one that earns its keep over time: the app depends on
+# React, Vite and jsdom through a lockfile, and something upstream can move
+# while the code sits untouched. Nothing here reaches the network, so a run
+# cannot fail because the published site is having a bad day.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Mondays, six-ish. Not on the hour, since every scheduled job in the world
+    # picks the hour and the queue is worst there.
+    - cron: '17 6 * * 1'
+  # So a run can be started by hand from the Actions tab.
+  workflow_dispatch:
+
+# A second run for the same branch makes the first one pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    # The whole run takes about a minute. This stops a hang sitting there for
+    # the six hours GitHub allows before anyone notices.
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node, from the same file a person would use
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # ci, not install: it installs exactly what the lockfile pins, and fails
+      # if package.json and the lockfile disagree, which "install" silently
+      # tidies over.
+      - name: Install exactly what the lockfile says
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: The app checks
+        run: npm test
+
+      - name: The published build, driven the way a person uses it
+        run: npm run verify:dist
