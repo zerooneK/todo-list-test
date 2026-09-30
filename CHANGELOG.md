@@ -18,6 +18,12 @@
   It is `>=22.22.2`, which is measured rather than chosen: vite allows Node
   20.19, vitest allows 22, and **jsdom 30 requires 22.22.2**, so jsdom is what
   sets it. The development machine is on exactly that version
+- A pre-push hook in `.githooks`, running the same three commands before
+  anything leaves the machine. GitHub Actions is the right place for these, but
+  a job only starts if the account is in good standing, and this one is
+  currently locked for billing — a run that never starts protects nothing. The
+  hook is committed, and `npm install` points git at it; `git push --no-verify`
+  is the way past it
 
 
 ### Changed

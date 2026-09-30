@@ -8,6 +8,10 @@ Tasks live in the browser, on one device. Use an ordinary window rather than a
 private one, and download a backup from the app now and then: that file is the
 only copy you can restore from.
 
+Working on it: `npm install` also points git at the pre-push hook in
+`.githooks`, so the same checks run before anything is pushed. Skip one push
+with `git push --no-verify`.
+
 ---
 
 The notes below are left over from the Vite template this project started from.

@@ -13,6 +13,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "setup:hooks": "node scripts/setup-hooks.mjs",
+    "prepare": "node scripts/setup-hooks.mjs",
     "verify:dist": "npm run build && node verify-dist.mjs && node verify-reload.mjs"
   },
   "dependencies": {

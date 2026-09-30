@@ -95,6 +95,25 @@ every push to `main`, on every pull request, and once a week.
   failure. Check the account's billing before looking for a fault in the
   workflow
 
+### The pre-push hook
+
+`.githooks/pre-push` runs the same three commands before anything leaves this
+machine, for as long as the workflow above cannot run.
+
+- It is a **backstop, not the main event**. It sees one machine and one branch,
+  so it cannot see what CI sees. What it does guarantee is that the checks
+  happen without anyone remembering
+- The hook is **committed**; the one line of git config that points git at it
+  is not. `npm install` sets it, because npm runs `prepare` on install, and
+  `scripts/setup-hooks.mjs` does the work. `npm ci` deliberately does not run
+  `prepare`: a CI machine has no reason to change its own git configuration
+- `npm run setup:hooks` turns it on by hand, and says so either way
+- It reports **every** check that failed rather than stopping at the first, so
+  one push attempt shows everything that is broken
+- It refuses to run without `node_modules` rather than skipping quietly: a
+  check that could not start must not read as a check that passed
+- `git push --no-verify` is the only way past it, and that is deliberate
+
 
 ## Run dev server
 

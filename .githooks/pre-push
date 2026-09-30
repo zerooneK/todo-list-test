@@ -1,0 +1,54 @@
+#!/bin/sh
+# The checks, run before anything leaves this machine.
+#
+# GitHub Actions is meant to be the place these run on every push, but a job
+# only starts if the account is in good standing, and a run that never starts
+# is no protection at all. So the same three commands the workflow runs, on the
+# way out, where they cannot be forgotten.
+#
+# This is a backstop, not the main event: it runs on one machine and one
+# branch, so it cannot see what CI sees. Its value is that the checks happen
+# without anyone remembering.
+
+# Git runs hooks from the top of the repository, but be explicit rather than
+# rely on it, since these commands have to run against the real project.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# Refuse to half-run. Without the installed packages, a check that cannot start
+# would otherwise read the same as a check that passed.
+if [ ! -d node_modules ]; then
+  echo ""
+  echo "  node_modules is missing, so the checks cannot run."
+  echo "  Run 'npm install' first. Not running is not the same as passing."
+  echo ""
+  exit 1
+fi
+
+# Every check runs even after one fails, so a single push attempt shows
+# everything that is broken rather than one thing at a time.
+failed=0
+
+step() {
+  echo ""
+  echo "  $1"
+  shift
+  "$@" || failed=1
+}
+
+echo ""
+echo "  Checking before this push."
+
+step "Lint" npm run lint
+step "The app checks" npm test
+step "The production build, driven the way a person uses it" npm run verify:dist
+
+echo ""
+if [ "$failed" -ne 0 ]; then
+  echo "  Not pushing: something above did not pass."
+  echo "  Fix it and push again, or send this one with:  git push --no-verify"
+  echo ""
+  exit 1
+fi
+
+echo "  All green. Pushing."
+echo ""
