@@ -10,13 +10,13 @@ import { join } from 'path'
 
 const HOOKS_DIR = '.githooks'
 
-function git(...args) {
-  return execFileSync('git', args, { encoding: 'utf8' }).trim()
+function git(args, cwd) {
+  return execFileSync('git', args, { encoding: 'utf8', cwd }).trim()
 }
 
 let root
 try {
-  root = git('rev-parse', '--show-toplevel')
+  root = git(['rev-parse', '--show-toplevel'])
 } catch {
   // Not a repository. Nothing to turn on, and nothing to complain about: npm
   // runs this on any install, including somewhere this is only a dependency.
@@ -25,7 +25,7 @@ try {
 }
 
 try {
-  git('config', 'core.hooksPath', HOOKS_DIR)
+  git(['config', 'core.hooksPath', HOOKS_DIR], root)
 } catch {
   // A missing hook is a convenience, not a broken install. Failing here would
   // make `npm install` fail over something the checks themselves do not need.
