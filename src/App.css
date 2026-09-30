@@ -44,9 +44,13 @@ body {
  * changing colour when the mouse hovers over it. That is a deliberate
  * consequence of the calm look, and it leaves anyone using a keyboard with no
  * idea which control they are on. This ring is the answer, and it is the one
- * signal in the app that is not about the mouse: it appears for keyboard
- * focus only, so a person using a mouse never sees it and the resting page is
- * unchanged.
+ * signal in the app that is not about the mouse: clicking a button with the
+ * mouse draws no ring, so the mouse never adds one.
+ *
+ * The add-task input is the exception, and it is deliberate: it is focused on
+ * load, and a text field matches `:focus-visible` whenever it is focused,
+ * because browsers want you to see where typing will go. So the input carries
+ * the ring at first paint. See AGENTS.md.
  *
  * It is drawn in --color-accent, which both looks already define, so it needs
  * no colour of its own and follows the light and dark looks on its own. It

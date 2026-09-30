@@ -137,16 +137,23 @@ task, done task, view, clear done. The old "todo" wording is retired.
 - The `@media (prefers-color-scheme: dark)` rule in `index.css` is not a third
   copy. It is the only thing that applies the dark look if the pre-paint script
   is blocked or throws, so it is checked against the built CSS rather than
-  assumed. Neither is the focus ring, which is the one style in the app that is
-  about the keyboard rather than the mouse: it is drawn for keyboard focus only,
-  in a colour both looks already define, and is checked against the built CSS
+  assumed. Neither is the focus ring, which is checked against the built CSS
   because jsdom ignores `:focus-visible` in computed styles
 - `ThemeToggle` receives the current theme and an `onToggleTheme` callback
 - Every control signals that it is pressable by colour on hover, and nothing
   else moves or outlines. That is a consequence of the calm look, so the one
   signal that is not about the mouse is a shared focus ring:
   `:where(button, input, [tabindex]):focus-visible` gets a 2px `--color-accent`
-  outline at 2px offset. Keyboard-only, so a mouse user never sees it
+  outline at 2px offset. Clicking a button with the mouse draws no ring, so the
+  mouse never *adds* one
+- The add-task input is the exception, and it is deliberate. It is focused on
+  load, and a text field matches `:focus-visible` whenever it is focused —
+  browsers do that on purpose, so you can always see where typing will go. So
+  the ring is on the input at first paint and while it is focused, however it
+  was reached. The promise was only ever that the mouse adds no ring; it was
+  never that the page is ringless until you touch the keyboard. Do not "fix"
+  this by suppressing the ring on the focused input: that would take the
+  indicator away from the one control everybody types into
 - The ring lives in one place and is never re-declared per control. `:where`
   keeps its specificity at zero so it cannot outrank a control's own styling
 - No rule anywhere may set an outline to `none` or `0` on a control: it would

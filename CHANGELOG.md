@@ -26,6 +26,17 @@
     match, and both look at the focus ring and pass 3:1 comfortably
 
 ### Fixed
+- `AGENTS.md` and the focus-ring comment in `App.css` both claimed the ring was
+  "keyboard-only, so a mouse user never sees it". That was never true, in two
+  ways: the add-task input is focused on load, and a text field matches
+  `:focus-visible` whenever it is focused, however it was reached — browsers do
+  that on purpose so you can see where typing will go. Confirmed by driving the
+  real built app: `document.activeElement` is the input and it matches
+  `:focus-visible` on first paint. The behaviour is right and is unchanged; the
+  description was wrong, and it is now written down accurately so nobody
+  "fixes" it by taking the indicator off the one control everybody types into
+
+### Fixed
 - The app fetched Poppins from Google's CDN with an `@import`, so every visit
   made a request to a third party. `AGENTS.md` claimed that "only the app's own
   assets are served", which was not true while that line was there. Typefaces
